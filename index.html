@@ -13,12 +13,15 @@
     </style>
 </head>
 <body>
+
     <div id="controls" style="position: absolute; top: 10px; right: 10px; background: rgba(255, 255, 255, 0); padding: 10px; z-index: 1000; border: 1px solid #9c929200; border-radius: 5px;">
         <button id="routeButton" class="button button-3">Find Route</button>
         <button id="togglePitchButton" class="button button-3">View</button>
-        <button id="toggleViewButton" class="button button-3">Toggle View</button>
     </div>
     <div id="map"></div>
+
+    <!-- Include dijkstra.js as a module -->
+    <script type="module" src="dijkstra.js"></script>
 
     <script type="module">
         import { dijkstra } from './dijkstra.js';
@@ -34,41 +37,44 @@
             bearing: 90
         });
 
-        // Pitch Toggle Button
+
         document.getElementById('togglePitchButton').addEventListener('click', function() {
-            const currentPitch = map.getPitch();
-            if (currentPitch === 0) {
-                map.setPitch(45);
-            } else {
-                map.setPitch(0);
-            }
-        });
+        const currentPitch = map.getPitch();
+        if (currentPitch === 0) {
+            map.setPitch(45);
+        } else {
+            map.setPitch(0);
+        }
+    });
 
         let edgesData = null;
         let nodesData = null;
 
         // Load Ground_Floor.geojson
-        fetch('Ground_Floor.geojson')
-            .then(response => response.json())
-            .then(data => {
-                map.addSource('ground-floor', {
-                    type: 'geojson',
-                    data: data
-                });
+// Load Ground_Floor.geojson
+fetch('Ground_Floor.geojson')
+    .then(response => response.json())
+    .then(data => {
+        map.addSource('ground-floor', {
+            type: 'geojson',
+            data: data
+        });
 
-                map.addLayer({
-                    id: 'ground-floor-3d',
-                    type: 'fill-extrusion',
-                    source: 'ground-floor',
-                    paint: {
-                        'fill-extrusion-color': '#9c9292',
-                        'fill-extrusion-opacity': 0.8,
-                        'fill-extrusion-height': 2,
-                        'fill-extrusion-base': 0
-                    }
-                });
-            })
-            .catch(error => console.error('Error loading Ground_Floor.geojson:', error));
+        // Add a 3D extrusion layer for the Ground_Floor
+        map.addLayer({
+            id: 'ground-floor-3d',
+            type: 'fill-extrusion',
+            source: 'ground-floor',
+            paint: {
+                'fill-extrusion-color': '#9c9292',
+                'fill-extrusion-opacity': 0.8,
+                'fill-extrusion-height': 2, // Use the height property from your GeoJSON
+                'fill-extrusion-base': 0 // Base height (ground level)
+            }
+        });
+    })
+    .catch(error => console.error('Error loading Ground_Floor.geojson:', error));
+
 
         // Load Nodes.geojson
         fetch('Nodes.geojson')
@@ -141,29 +147,6 @@
             })
             .catch(error => console.error('Error loading Edges.geojson:', error));
 
-        // Load Building.geojson
-        fetch('Building.geojson')
-            .then(response => response.json())
-            .then(data => {
-                map.addSource('building', {
-                    type: 'geojson',
-                    data: data
-                });
-
-                map.addLayer({
-                    id: 'building-layer',
-                    type: 'fill-extrusion',
-                    source: 'building',
-                    paint: {
-                        'fill-extrusion-color': '#b0b0b0',
-                        'fill-extrusion-height': ['get', 'height'],
-                        'fill-extrusion-base': ['get', 'min_height'],
-                        'fill-extrusion-opacity': 0.9
-                    }
-                });
-            })
-            .catch(error => console.error('Error loading Building.geojson:', error));
-
         function buildGraphAndRoute(nodesData, edgesData) {
             var graph = {};
 
@@ -212,6 +195,8 @@
                     return;
                 }
 
+                console.log('Route Coordinates:', routeCoordinates);
+
                 var routeGeoJSON = {
                     "type": "Feature",
                     "geometry": {
@@ -241,56 +226,6 @@
                 }
             });
         }
-
-        // Toggle layers button functionality
-        document.getElementById('toggleViewButton').addEventListener('click', function () {
-            const buildingLayer = map.getLayer('building-layer');
-            const groundFloorLayer = map.getLayer('ground-floor-3d');
-            const edgesLayer = map.getLayer('edges-layer');
-            const nodesLayer = map.getLayer('nodes-layer');
-
-            if (buildingLayer && groundFloorLayer) {
-                // Hide Building and Ground_Floor, show Edges and Nodes
-                map.setLayoutProperty('building-layer', 'visibility', 'none');
-                map.setLayoutProperty('ground-floor-3d', 'visibility', 'none');
-                if (edgesLayer) map.setLayoutProperty('edges-layer', 'visibility', 'visible');
-                if (nodesLayer) map.setLayoutProperty('nodes-layer', 'visibility', 'visible');
-                alert('You are now viewing the network (Edges & Nodes).');
-            } else if (edgesLayer && nodesLayer) {
-                // Show Building and Ground_Floor, hide Edges and Nodes
-                if (map.getSource('building')) {
-                    map.setLayoutProperty('building-layer', 'visibility', 'visible');
-                } else {
-                    fetch('Building.geojson')
-                        .then(response => response.json())
-                        .then(data => {
-                            map.addSource('building', {
-                                type: 'geojson',
-                                data: data
-                            });
-                            map.addLayer({
-                                id: 'building-layer',
-                                type: 'fill-extrusion',
-                                source: 'building',
-                                paint: {
-                                    'fill-extrusion-color': '#b0b0b0',
-                                    'fill-extrusion-height': 20,
-                                    'fill-extrusion-base': 0,
-                                    'fill-extrusion-opacity': 0.9
-                                }
-                            });
-                        })
-                        .catch(error => console.error('Error loading Building.geojson:', error));
-                }
-                map.setLayoutProperty('ground-floor-3d', 'visibility', 'visible');
-                if (edgesLayer) map.setLayoutProperty('edges-layer', 'visibility', 'none');
-                if (nodesLayer) map.setLayoutProperty('nodes-layer', 'visibility', 'none');
-                alert('You are now viewing the building and ground floor.');
-            } else {
-                alert('Something went wrong. Please reload the map.');
-            }
-        });
-
     </script>
 </body>
 </html>
