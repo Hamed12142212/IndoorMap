@@ -112,6 +112,9 @@ fetch('Ground_Floor.geojson')
                     id: 'nodes-layer',
                     type: 'circle',
                     source: 'nodes',
+                    layout: {
+                    'visibility': 'none' // Add this line
+                     },
                     paint: {
                         'circle-radius': 6,
                         'circle-color': '#ff5733'
@@ -123,6 +126,7 @@ fetch('Ground_Floor.geojson')
                     type: 'symbol',
                     source: 'nodes',
                     layout: {
+                        'visibility': 'none',
                         'text-field': ['get', 'NODE_ID'],
                         'text-size': 12,
                         'text-anchor': 'top',
@@ -156,6 +160,9 @@ fetch('Ground_Floor.geojson')
                     id: 'edges-layer',
                     type: 'line',
                     source: 'edges',
+                        layout: {
+                             'visibility': 'none'
+                                },
                     paint: {
                         'line-color': '#00f',
                         'line-width': 2
