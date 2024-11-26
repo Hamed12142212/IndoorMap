@@ -6,6 +6,7 @@
     <title>Mapbox Route Example</title>
     <script src="https://api.mapbox.com/mapbox-gl-js/v2.10.0/mapbox-gl.js"></script>
     <link href="https://api.mapbox.com/mapbox-gl-js/v2.10.0/mapbox-gl.css" rel="stylesheet">
+    <link rel="stylesheet" href="buttons.css">
     <style>
         body { margin: 0; padding: 0; }
         #map { width: 100%; height: 100vh; }
@@ -13,9 +14,9 @@
 </head>
 <body>
 
-    <div id="controls" style="position: absolute; top: 10px; right: 10px; background: rgb(255, 255, 255); padding: 10px; z-index: 1000; border: 1px solid #9c9292; border-radius: 5px;">
-        <button id="routeButton">Find Route</button>
-        <button id="togglePitchButton">View</button>
+    <div id="controls" style="position: absolute; top: 10px; right: 10px; background: rgba(255, 255, 255, 0); padding: 10px; z-index: 1000; border: 1px solid #9c929200; border-radius: 5px;">
+        <button id="routeButton" class="button button-3">Find Route</button>
+        <button id="togglePitchButton" class="button button-3">View</button>
     </div>
     <div id="map"></div>
 
