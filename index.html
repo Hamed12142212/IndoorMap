@@ -39,19 +39,20 @@
 
         mapboxgl.accessToken = 'pk.eyJ1IjoiaGFtZWRoYWRhZCIsImEiOiJjbTNsdHBwaG4wbXo1MmxzZHQ2bGM2azFvIn0.pp7ow3gyNYL7pIA0ZQmHuw';
 
+        // إنشاء الخريطة بمقياس رسم صغير وإعدادات ثلاثية الأبعاد
         var map = new mapboxgl.Map({
             container: 'map',
             style: 'mapbox://styles/hamedhadad/cm3xvrod9003g01sgap1cftwo',
             center: [35.1826, 31.96065],
-            zoom: 20.5,
-            pitch: 45,
-            bearing: 90
+            zoom: 16, // مقياس رسم صغير
+            pitch: 60, // الميل للعرض ثلاثي الأبعاد
+            bearing: -30 // زاوية الدوران
         });
 
         // Pitch Toggle Button
         document.getElementById('togglePitchButton').addEventListener('click', function() {
             const currentPitch = map.getPitch();
-            map.setPitch(currentPitch === 0 ? 45 : 0);
+            map.setPitch(currentPitch === 0 ? 60 : 0);
         });
 
         let edgesData = null;
@@ -259,41 +260,13 @@
                 map.setLayoutProperty('ground-floor-3d', 'visibility', 'none');
                 if (edgesLayer) map.setLayoutProperty('edges-layer', 'visibility', 'visible');
                 if (nodesLayer) map.setLayoutProperty('nodes-layer', 'visibility', 'visible');
-                alert('You are now viewing the network (Edges & Nodes).');
-            } else if (edgesLayer && nodesLayer) {
-                if (map.getSource('building')) {
-                    map.setLayoutProperty('building-layer', 'visibility', 'visible');
-                } else {
-                    fetch('Building.geojson')
-                        .then(response => response.json())
-                        .then(data => {
-                            map.addSource('building', {
-                                type: 'geojson',
-                                data: data
-                            });
-                            map.addLayer({
-                                id: 'building-layer',
-                                type: 'fill-extrusion',
-                                source: 'building',
-                                paint: {
-                                    'fill-extrusion-color': '#b0b0b0',
-                                    'fill-extrusion-height': 20,
-                                    'fill-extrusion-base': 0,
-                                    'fill-extrusion-opacity': 0.9
-                                }
-                            });
-                        })
-                        .catch(error => console.error('Error loading Building.geojson:', error));
-                }
+            } else {
+                map.setLayoutProperty('building-layer', 'visibility', 'visible');
                 map.setLayoutProperty('ground-floor-3d', 'visibility', 'visible');
                 if (edgesLayer) map.setLayoutProperty('edges-layer', 'visibility', 'none');
                 if (nodesLayer) map.setLayoutProperty('nodes-layer', 'visibility', 'none');
-                alert('You are now viewing the building and ground floor.');
-            } else {
-                alert('Something went wrong. Please reload the map.');
             }
         });
-
     </script>
 </body>
 </html>
