@@ -15,6 +15,7 @@
     </style>
 </head>
 <body>
+
     <!-- أزرار التحكم -->
     <div id="controls" style="position: absolute; top: 10px; right: 10px; background: rgba(255, 255, 255, 0.8); padding: 10px; z-index: 1000; border: 1px solid #ccc; border-radius: 5px;">
         <button id="routeButton" class="button button-3">Find Route</button>
@@ -44,7 +45,17 @@
             bearing: 90
         });
 
-        // الحدث الخاص بزر Toggle View
+        // زر Toggle Pitch
+        document.getElementById('togglePitchButton').addEventListener('click', function() {
+            const currentPitch = map.getPitch();
+            if (currentPitch === 0) {
+                map.setPitch(45);
+            } else {
+                map.setPitch(0);
+            }
+        });
+
+        // زر Toggle View
         document.getElementById('toggleViewButton').addEventListener('click', function () {
             const buildingLayer = map.getLayer('building-layer');
             const groundFloorLayer = map.getLayer('ground-floor-3d');
@@ -90,6 +101,184 @@
                 alert('Something went wrong. Please reload the map.');
             }
         });
+
+        let edgesData = null;
+        let nodesData = null;
+
+        // تحميل ملف Ground_Floor.geojson
+        fetch('Ground_Floor.geojson')
+            .then(response => response.json())
+            .then(data => {
+                map.addSource('ground-floor', {
+                    type: 'geojson',
+                    data: data
+                });
+
+                map.addLayer({
+                    id: 'ground-floor-3d',
+                    type: 'fill-extrusion',
+                    source: 'ground-floor',
+                    paint: {
+                        'fill-extrusion-color': '#9c9292',
+                        'fill-extrusion-opacity': 0.8,
+                        'fill-extrusion-height': 2,
+                        'fill-extrusion-base': 0
+                    }
+                });
+            })
+            .catch(error => console.error('Error loading Ground_Floor.geojson:', error));
+
+        // تحميل ملف Nodes.geojson
+        fetch('Nodes.geojson')
+            .then(response => response.json())
+            .then(data => {
+                nodesData = data;
+
+                map.addSource('nodes', {
+                    type: 'geojson',
+                    data: nodesData
+                });
+
+                map.addLayer({
+                    id: 'nodes-layer',
+                    type: 'circle',
+                    source: 'nodes',
+                    paint: {
+                        'circle-radius': 6,
+                        'circle-color': '#ff5733'
+                    }
+                });
+
+                map.addLayer({
+                    id: 'node-labels',
+                    type: 'symbol',
+                    source: 'nodes',
+                    layout: {
+                        'text-field': ['get', 'NODE_ID'],
+                        'text-size': 12,
+                        'text-anchor': 'top',
+                        'text-offset': [0, 1.5]
+                    },
+                    paint: {
+                        'text-color': '#000000',
+                        'text-halo-color': '#ffffff',
+                        'text-halo-width': 2
+                    }
+                });
+
+                if (edgesData) {
+                    buildGraphAndRoute(nodesData, edgesData);
+                }
+            })
+            .catch(error => console.error('Error loading Nodes.geojson:', error));
+
+        // تحميل ملف Edges.geojson
+        fetch('Edges.geojson')
+            .then(response => response.json())
+            .then(data => {
+                edgesData = data;
+
+                map.addSource('edges', {
+                    type: 'geojson',
+                    data: edgesData
+                });
+
+                map.addLayer({
+                    id: 'edges-layer',
+                    type: 'line',
+                    source: 'edges',
+                    paint: {
+                        'line-color': '#00f',
+                        'line-width': 2
+                    }
+                });
+
+                if (nodesData) {
+                    buildGraphAndRoute(nodesData, edgesData);
+                }
+            })
+            .catch(error => console.error('Error loading Edges.geojson:', error));
+
+        function buildGraphAndRoute(nodesData, edgesData) {
+            var graph = {};
+
+            edgesData.features.forEach(function(edge) {
+                var from = edge.properties.Start_NODE;
+                var to = edge.properties.End_NODE;
+                var weight = edge.properties.Shape_Length;
+
+                if (!graph[from]) graph[from] = [];
+                if (!graph[to]) graph[to] = [];
+
+                graph[from].push({ node: to, weight: weight });
+                if (!edge.properties.isOneWay) {
+                    graph[to].push({ node: from, weight: weight });
+                }
+            });
+
+            document.getElementById('routeButton').addEventListener('click', function() {
+                var fromNode = prompt("Enter the start node ID (e.g., NODE_015):");
+                var toNode = prompt("Enter the end node ID (e.g., NODE_027):");
+
+                if (!fromNode || !toNode) {
+                    alert("Both 'From' and 'To' nodes must be specified.");
+                    return;
+                }
+
+                if (!graph[fromNode] || !graph[toNode]) {
+                    alert("One or both of the specified nodes do not exist in the graph.");
+                    return;
+                }
+
+                var route = dijkstra(graph, fromNode, toNode);
+
+                var routeCoordinates = [];
+                route.forEach(function(nodeID) {
+                    var node = nodesData.features.find(function(feature) {
+                        return feature.properties.NODE_ID === nodeID;
+                    });
+                    if (node) {
+                        routeCoordinates.push([node.properties.X, node.properties.Y]);
+                    }
+                });
+
+                if (routeCoordinates.length === 0) {
+                    alert("No route found between the selected nodes.");
+                    return;
+                }
+
+                if (map.getLayer('route-line')) {
+                    map.getSource('route').setData({
+                        type: 'Feature',
+                        geometry: {
+                            type: 'LineString',
+                            coordinates: routeCoordinates
+                        }
+                    });
+                } else {
+                    map.addSource('route', {
+                        type: 'geojson',
+                        data: {
+                            type: 'Feature',
+                            geometry: {
+                                type: 'LineString',
+                                coordinates: routeCoordinates
+                            }
+                        }
+                    });
+
+                    map.addLayer({
+                        id: 'route-line',
+                        type: 'line',
+                        source: 'route',
+                        paint: {
+                            'line-color': '#f00',
+                            'line-width': 4
+                        }
+                    });
+                }
+            });
+        }
     </script>
 </body>
 </html>
