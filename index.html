@@ -38,249 +38,247 @@
             bearing: 90
         });
 
-        document.getElementById('togglePitchButton').addEventListener('click', function() {
-        const currentPitch = map.getPitch();
-        if (currentPitch === 0) {
-            map.setPitch(45);
-        } else {
-            map.setPitch(0);
-        }
-    });
+        // Wait for the map to finish loading before adding sources and layers
+        map.on('load', function() {
+            let edgesData = null;
+            let nodesData = null;
+            let currentView = 'building'; // Default view
 
-            // Toggle layers button functionality
+            // Create an array to track loaded data sources
+            const dataSources = [
+                { url: 'Ground_Floor.geojson', type: 'ground-floor' },
+                { url: 'BZUBuildings.geojson', type: 'building-layer' },
+                { url: 'Nodes.geojson', type: 'nodes' },
+                { url: 'Edges.geojson', type: 'edges' }
+            ];
+
+            // Function to load a single data source
+            function loadDataSource(sourceConfig) {
+                return fetch(sourceConfig.url)
+                    .then(response => {
+                        if (!response.ok) {
+                            throw new Error(`HTTP error! status: ${response.status}`);
+                        }
+                        return response.json();
+                    })
+                    .then(data => {
+                        // Add source to map
+                        map.addSource(sourceConfig.type, {
+                            type: 'geojson',
+                            data: data
+                        });
+
+                        // Add layers based on source type
+                        switch(sourceConfig.type) {
+                            case 'ground-floor':
+                                map.addLayer({
+                                    id: 'ground-floor-3d',
+                                    type: 'fill-extrusion',
+                                    source: 'ground-floor',
+                                    layout: { visibility: 'none' },
+                                    paint: {
+                                        'fill-extrusion-color': '#9c9292',
+                                        'fill-extrusion-opacity': 0.8,
+                                        'fill-extrusion-height': 2,
+                                        'fill-extrusion-base': 0
+                                    }
+                                });
+                                break;
+
+                            case 'building-layer':
+                                map.addLayer({
+                                    id: 'building-layer-3d',
+                                    type: 'fill-extrusion',
+                                    source: 'building-layer',
+                                    paint: {
+                                        'fill-extrusion-color': '#9c9292',
+                                        'fill-extrusion-opacity': 0.8,
+                                        'fill-extrusion-height': 15,
+                                        'fill-extrusion-base': 0
+                                    }
+                                });
+                                break;
+
+                            case 'nodes':
+                                map.addLayer({
+                                    id: 'nodes-layer',
+                                    type: 'circle',
+                                    source: 'nodes',
+                                    layout: { visibility: 'none' },
+                                    paint: {
+                                        'circle-radius': 6,
+                                        'circle-color': '#ff5733'
+                                    }
+                                });
+
+                                map.addLayer({
+                                    id: 'node-labels',
+                                    type: 'symbol',
+                                    source: 'nodes',
+                                    layout: {
+                                         visibility: 'none',
+                                        'text-field': ['get', 'NODE_ID'],
+                                        'text-size': 12,
+                                        'text-anchor': 'top',
+                                        'text-offset': [0, 1.5]
+                                    },
+                                    paint: {
+                                        'text-color': '#000000',
+                                        'text-halo-color': '#ffffff',
+                                        'text-halo-width': 2
+                                    }
+                                });
+
+                                nodesData = data;
+                                break;
+
+                            case 'edges':
+                                map.addLayer({
+                                    id: 'edges-layer',
+                                    type: 'line',
+                                    source: 'edges',
+                                    layout: { visibility: 'none' },
+                                    paint: {
+                                        'line-color': '#00f',
+                                        'line-width': 2
+                                    }
+                                });
+
+                                edgesData = data;
+                                break;
+                        }
+
+                        return data;
+                    })
+                    .catch(error => {
+                        console.error(`Error loading ${sourceConfig.url}:`, error);
+                    });
+            }
+
+            // Load all data sources
+            Promise.all(dataSources.map(loadDataSource))
+                .then(() => {
+                    // Once all sources are loaded, build the graph and set up routing
+                    if (nodesData && edgesData) {
+                        buildGraphAndRoute(nodesData, edgesData);
+                    }
+                });
+
             document.getElementById('toggleViewButton').addEventListener('click', function () {
-            if (currentView === 'building') {
-                // Hide Building, Show Ground_Floor
-                map.setLayoutProperty('building-layer-3d', 'visibility', 'none');
-                map.setLayoutProperty('ground-floor-3d', 'visibility', 'visible');
-                                   map.flyTo({ center: [35.1826, 31.96065], zoom: 20.5 }); // Zoom to Ground Floor
-                currentView = 'ground-floor';
-            } else if (currentView === 'ground-floor') {
-                // Hide Ground_Floor, Show Nodes & Edges
-                map.setLayoutProperty('ground-floor-3d', 'visibility', 'none');
-                map.setLayoutProperty('nodes-layer', 'visibility', 'visible');
-                map.setLayoutProperty('edges-layer', 'visibility', 'visible');
-                map.setLayoutProperty('node-labels', 'visibility', 'visible'); // Show Node Labels
-                              map.flyTo({ center: [35.1826, 31.96065], zoom: 20.5 }); // Zoom to Ground Floor
-                currentView = 'nodes-edges';
-            } else if (currentView === 'nodes-edges') {
-                // Reset to show Building
-                map.setLayoutProperty('nodes-layer', 'visibility', 'none');
-                map.setLayoutProperty('edges-layer', 'visibility', 'none');
-                map.setLayoutProperty('node-labels', 'visibility', 'none'); // Hide Node Labels
-                map.setLayoutProperty('building-layer-3d', 'visibility', 'visible');
-                                   map.flyTo({ center: [35.1820, 31.96000], zoom: 17 }); // Reset to Building
-                currentView = 'building';
-            }
-        });
-
-        let edgesData = null;
-        let nodesData = null;
-        let currentView = 'building'; // Default view
-
-        
-// Load Ground_Floor.geojson
-fetch('Ground_Floor.geojson')
-    .then(response => response.json())
-    .then(data => {
-        map.addSource('ground-floor', {
-            type: 'geojson',
-            data: data
-        });
-
-        // Add a 3D extrusion layer for the Ground_Floor
-        map.addLayer({
-            id: 'ground-floor-3d',
-            type: 'fill-extrusion',
-            source: 'ground-floor',
-                       layout: { visibility: 'none' }, // تعطيل الطبقة افتراضيًا
-            paint: {
-                'fill-extrusion-color': '#9c9292',
-                'fill-extrusion-opacity': 0.8,
-                'fill-extrusion-height': 2, // Use the height property from your GeoJSON
-                'fill-extrusion-base': 0 // Base height (ground level)
-            }
-        });
-    })
-    .catch(error => console.error('Error loading Ground_Floor.geojson:', error));
-
-    // Load Ground_Floor.geojson
-fetch('BZUBuildings.geojson')
-    .then(response => response.json())
-    .then(data => {
-        map.addSource('building-layer', {
-            type: 'geojson',
-            data: data
-        });
-
-        // Add a 3D extrusion layer for the Ground_Floor
-        map.addLayer({
-            id: 'building-layer-3d',
-            type: 'fill-extrusion',
-            source: 'building-layer',
-                  
-            paint: {
-                'fill-extrusion-color': '#9c9292',
-                'fill-extrusion-opacity': 0.8,
-                'fill-extrusion-height': 15, // Use the height property from your GeoJSON
-                'fill-extrusion-base': 0 // Base height (ground level)
-            }
-        });
-    })
-
-        // Load Nodes.geojson
-        fetch('Nodes.geojson')
-            .then(response => response.json())
-            .then(data => {
-                nodesData = data;
-
-                map.addSource('nodes', {
-                    type: 'geojson',
-                    data: nodesData
-                });
-
-                map.addLayer({
-                    id: 'nodes-layer',
-                    type: 'circle',
-                    source: 'nodes',
-                                      layout: { visibility: 'none' }, // تعطيل الطبقة افتراضيًا
-                    paint: {
-                        'circle-radius': 6,
-                        'circle-color': '#ff5733'
-                    }
-                });
-
-                map.addLayer({
-                    id: 'node-labels',
-                    type: 'symbol',
-                    source: 'nodes',
-                    layout: {
-                        'text-field': ['get', 'NODE_ID'],
-                        'text-size': 12,
-                        'text-anchor': 'top',
-                        'text-offset': [0, 1.5]
-                    },
-                    paint: {
-                        'text-color': '#000000',
-                        'text-halo-color': '#ffffff',
-                        'text-halo-width': 2
-                    }
-                });
-
-                if (edgesData) {
-                    buildGraphAndRoute(nodesData, edgesData);
-                }
-            })
-            .catch(error => console.error('Error loading Nodes.geojson:', error));
-
-        // Load Edges.geojson
-        fetch('Edges.geojson')
-            .then(response => response.json())
-            .then(data => {
-                edgesData = data;
-
-                map.addSource('edges', {
-                    type: 'geojson',
-                    data: edgesData
-                });
-
-                map.addLayer({
-                    id: 'edges-layer',
-                    type: 'line',
-                    source: 'edges',
-                                      layout: { visibility: 'none' }, // تعطيل الطبقة افتراضيًا
-                    paint: {
-                        'line-color': '#00f',
-                        'line-width': 2
-                    }
-                });
-
-                if (nodesData) {
-                    buildGraphAndRoute(nodesData, edgesData);
-                }
-            })
-            .catch(error => console.error('Error loading Edges.geojson:', error));
-
-        function buildGraphAndRoute(nodesData, edgesData) {
-            var graph = {};
-
-            edgesData.features.forEach(function(edge) {
-                var from = edge.properties.Start_NODE;
-                var to = edge.properties.End_NODE;
-                var weight = edge.properties.Shape_Length;
-
-                if (!graph[from]) graph[from] = [];
-                if (!graph[to]) graph[to] = [];
-
-                graph[from].push({ node: to, weight: weight });
-                if (!edge.properties.isOneWay) {
-                    graph[to].push({ node: from, weight: weight });
+                if (currentView === 'building') {
+                    // Hide Building, Show Ground_Floor
+                    map.setLayoutProperty('building-layer-3d', 'visibility', 'none');
+                    map.setLayoutProperty('ground-floor-3d', 'visibility', 'visible');
+                    map.flyTo({ center: [35.1826, 31.96065], zoom: 20.5 }); // Zoom to Ground Floor
+                    currentView = 'ground-floor';
+                } else if (currentView === 'ground-floor') {
+                    // Hide Ground_Floor, Show Nodes & Edges
+                    map.setLayoutProperty('ground-floor-3d', 'visibility', 'none');
+                    map.setLayoutProperty('nodes-layer', 'visibility', 'visible');
+                    map.setLayoutProperty('edges-layer', 'visibility', 'visible');
+                    map.setLayoutProperty('node-labels', 'visibility', 'visible'); // Show Node Labels
+                    map.flyTo({ center: [35.1826, 31.96065], zoom: 20.5 }); // Zoom to Ground Floor
+                    currentView = 'nodes-edges';
+                } else if (currentView === 'nodes-edges') {
+                    // Reset to show Building
+                    map.setLayoutProperty('nodes-layer', 'visibility', 'none');
+                    map.setLayoutProperty('edges-layer', 'visibility', 'none');
+                    map.setLayoutProperty('node-labels', 'visibility', 'none'); // Hide Node Labels
+                    map.setLayoutProperty('building-layer-3d', 'visibility', 'visible');
+                    map.flyTo({ center: [35.1820, 31.96000], zoom: 17 }); // Reset to Building
+                    currentView = 'building';
                 }
             });
 
-            document.getElementById('routeButton').addEventListener('click', function() {
-                var fromNode = prompt("Enter the start node ID (e.g., NODE_015):");
-                var toNode = prompt("Enter the end node ID (e.g., NODE_027):");
+            function buildGraphAndRoute(nodesData, edgesData) {
+                var graph = {};
 
-                if (!fromNode || !toNode) {
-                    alert("Both 'From' and 'To' nodes must be specified.");
-                    return;
-                }
+                edgesData.features.forEach(function(edge) {
+                    var from = edge.properties.Start_NODE;
+                    var to = edge.properties.End_NODE;
+                    var weight = edge.properties.Shape_Length;
 
-                if (!graph[fromNode] || !graph[toNode]) {
-                    alert("One or both of the specified nodes do not exist in the graph.");
-                    return;
-                }
+                    if (!graph[from]) graph[from] = [];
+                    if (!graph[to]) graph[to] = [];
 
-                var route = dijkstra(graph, fromNode, toNode);
-
-                var routeCoordinates = [];
-                route.forEach(function(nodeID) {
-                    var node = nodesData.features.find(function(feature) {
-                        return feature.properties.NODE_ID === nodeID;
-                    });
-                    if (node) {
-                        routeCoordinates.push([node.properties.X, node.properties.Y]);
+                    graph[from].push({ node: to, weight: weight });
+                    if (!edge.properties.isOneWay) {
+                        graph[to].push({ node: from, weight: weight });
                     }
                 });
 
-                if (routeCoordinates.length === 0) {
-                    alert("No route found between the specified nodes.");
-                    return;
-                }
+                document.getElementById('routeButton').addEventListener('click', function() {
+                    var fromNode = prompt("Enter the start node ID (e.g., NODE_015):");
+                    var toNode = prompt("Enter the end node ID (e.g., NODE_027):");
 
-                console.log('Route Coordinates:', routeCoordinates);
-
-                var routeGeoJSON = {
-                    "type": "Feature",
-                    "geometry": {
-                        "type": "LineString",
-                        "coordinates": routeCoordinates
+                    if (!fromNode || !toNode) {
+                        alert("Both 'From' and 'To' nodes must be specified.");
+                        return;
                     }
-                };
 
-                if (map.getSource('route')) {
-                    map.getSource('route').setData(routeGeoJSON);
-                } else {
-                    map.addSource('route', {
-                        type: 'geojson',
-                        data: routeGeoJSON
-                    });
+                    if (!graph[fromNode] || !graph[toNode]) {
+                        alert("One or both of the specified nodes do not exist in the graph.");
+                        return;
+                    }
 
-                    map.addLayer({
-                        id: 'route-layer',
-                        type: 'line',
-                        source: 'route',
-                        paint: {
-                            'line-color': '#FF5733',
-                            'line-width': 4,
-                            'line-opacity': 0.7
+                    var route = dijkstra(graph, fromNode, toNode);
+
+                    var routeCoordinates = [];
+                    route.forEach(function(nodeID) {
+                        var node = nodesData.features.find(function(feature) {
+                            return feature.properties.NODE_ID === nodeID;
+                        });
+                        if (node) {
+                            routeCoordinates.push([node.properties.X, node.properties.Y]);
                         }
                     });
-                }
-            });
-        }
+
+                    if (routeCoordinates.length === 0) {
+                        alert("No route found between the specified nodes.");
+                        return;
+                    }
+
+                    console.log('Route Coordinates:', routeCoordinates);
+
+                    var routeGeoJSON = {
+                        "type": "Feature",
+                        "geometry": {
+                            "type": "LineString",
+                            "coordinates": routeCoordinates
+                        }
+                    };
+
+                    if (map.getSource('route')) {
+                        map.getSource('route').setData(routeGeoJSON);
+                    } else {
+                        map.addSource('route', {
+                            type: 'geojson',
+                            data: routeGeoJSON
+                        });
+
+                        map.addLayer({
+                            id: 'route-layer',
+                            type: 'line',
+                            source: 'route',
+                            paint: {
+                                'line-color': '#FF5733',
+                                'line-width': 4,
+                                'line-opacity': 0.7
+                            }
+                        });
+                    }
+                });
+            }
+        });
+
+        document.getElementById('togglePitchButton').addEventListener('click', function() {
+            const currentPitch = map.getPitch();
+            if (currentPitch === 0) {
+                map.setPitch(45);
+            } else {
+                map.setPitch(0);
+            }
+        });
     </script>
 </body>
 </html>
-
