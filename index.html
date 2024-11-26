@@ -7,22 +7,24 @@
     <script src="https://api.mapbox.com/mapbox-gl-js/v2.10.0/mapbox-gl.js"></script>
     <link href="https://api.mapbox.com/mapbox-gl-js/v2.10.0/mapbox-gl.css" rel="stylesheet">
     <link rel="stylesheet" href="buttons.css">
-    <!-- Font Awesome for icons -->
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" rel="stylesheet">
+    <!-- إضافة مكتبة Font Awesome -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css" rel="stylesheet">
     <style>
         body { margin: 0; padding: 0; }
         #map { width: 100%; height: 100vh; }
+        #toggleViewButton i {
+            font-size: 20px; /* حجم الأيقونة */
+            color: #ffffff;  /* لون الأيقونة */
+        }
     </style>
 </head>
 <body>
-
     <div id="controls" style="position: absolute; top: 10px; right: 10px; background: rgba(255, 255, 255, 0); padding: 10px; z-index: 1000; border: 1px solid #9c929200; border-radius: 5px;">
         <button id="routeButton" class="button button-3">Find Route</button>
         <button id="togglePitchButton" class="button button-3">View</button>
-        <!-- تعديل الزر لإضافة أيقونة عين -->
         <button id="toggleViewButton" class="button button-3">
-            <i class="fas fa-eye"></i>
-        </button>
+            <i class="fas fa-eye"></i> Toggle View
+        </button> <!-- أيقونة العين هنا -->
     </div>
     <div id="map"></div>
 
@@ -43,7 +45,58 @@
             bearing: 90
         });
 
-        // باقي السكربت بدون تغييرات...
+        // باقي الكود كما هو
+        // ...
+
+        // زر Toggle View
+        document.getElementById('toggleViewButton').addEventListener('click', function () {
+            const buildingLayer = map.getLayer('building-layer');
+            const groundFloorLayer = map.getLayer('ground-floor-3d');
+            const edgesLayer = map.getLayer('edges-layer');
+            const nodesLayer = map.getLayer('nodes-layer');
+
+            if (buildingLayer && groundFloorLayer) {
+                // إخفاء الطبقات الأخرى
+                map.setLayoutProperty('building-layer', 'visibility', 'none');
+                map.setLayoutProperty('ground-floor-3d', 'visibility', 'none');
+                if (edgesLayer) map.setLayoutProperty('edges-layer', 'visibility', 'visible');
+                if (nodesLayer) map.setLayoutProperty('nodes-layer', 'visibility', 'visible');
+                alert('You are now viewing the network (Edges & Nodes).');
+            } else if (edgesLayer && nodesLayer) {
+                // إظهار المباني
+                if (map.getSource('building')) {
+                    map.setLayoutProperty('building-layer', 'visibility', 'visible');
+                } else {
+                    fetch('Building.geojson')
+                        .then(response => response.json())
+                        .then(data => {
+                            map.addSource('building', {
+                                type: 'geojson',
+                                data: data
+                            });
+                            map.addLayer({
+                                id: 'building-layer',
+                                type: 'fill-extrusion',
+                                source: 'building',
+                                paint: {
+                                    'fill-extrusion-color': '#b0b0b0',
+                                    'fill-extrusion-height': 20,
+                                    'fill-extrusion-base': 0,
+                                    'fill-extrusion-opacity': 0.9
+                                }
+                            });
+                        })
+                        .catch(error => console.error('Error loading Building.geojson:', error));
+                }
+                map.setLayoutProperty('ground-floor-3d', 'visibility', 'visible');
+                if (edgesLayer) map.setLayoutProperty('edges-layer', 'visibility', 'none');
+                if (nodesLayer) map.setLayoutProperty('nodes-layer', 'visibility', 'none');
+                alert('You are now viewing the building and ground floor.');
+            } else {
+                alert('Something went wrong. Please reload the map.');
+            }
+        });
+
     </script>
 </body>
 </html>
