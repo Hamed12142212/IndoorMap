@@ -13,16 +13,12 @@
     </style>
 </head>
 <body>
-
     <div id="controls" style="position: absolute; top: 10px; right: 10px; background: rgba(255, 255, 255, 0); padding: 10px; z-index: 1000; border: 1px solid #9c929200; border-radius: 5px;">
         <button id="routeButton" class="button button-3">Find Route</button>
         <button id="togglePitchButton" class="button button-3">View</button>
-        <button id="toggleViewButton" class="button button-3">Toggle View</button> <!-- الزر الجديد -->
+        <button id="toggleViewButton" class="button button-3">Toggle View</button>
     </div>
     <div id="map"></div>
-
-    <!-- Include dijkstra.js as a module -->
-    <script type="module" src="dijkstra.js"></script>
 
     <script type="module">
         import { dijkstra } from './dijkstra.js';
@@ -60,7 +56,6 @@
                     data: data
                 });
 
-                // Add a 3D extrusion layer for the Ground_Floor
                 map.addLayer({
                     id: 'ground-floor-3d',
                     type: 'fill-extrusion',
@@ -145,6 +140,29 @@
                 }
             })
             .catch(error => console.error('Error loading Edges.geojson:', error));
+
+        // Load Building.geojson
+        fetch('Building.geojson')
+            .then(response => response.json())
+            .then(data => {
+                map.addSource('building', {
+                    type: 'geojson',
+                    data: data
+                });
+
+                map.addLayer({
+                    id: 'building-layer',
+                    type: 'fill-extrusion',
+                    source: 'building',
+                    paint: {
+                        'fill-extrusion-color': '#b0b0b0',
+                        'fill-extrusion-height': ['get', 'height'],
+                        'fill-extrusion-base': ['get', 'min_height'],
+                        'fill-extrusion-opacity': 0.9
+                    }
+                });
+            })
+            .catch(error => console.error('Error loading Building.geojson:', error));
 
         function buildGraphAndRoute(nodesData, edgesData) {
             var graph = {};
