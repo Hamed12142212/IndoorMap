@@ -1,4 +1,5 @@
 @import url('https://fonts.googleapis.com/css?family=Roboto+Condensed');
+@import url('https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css');
 
 body {
   font-family: 'Roboto Condensed', sans-serif;
@@ -15,20 +16,19 @@ h1 {
   margin-bottom: 50px;
 }
 .button {
-  width: 120px; /* Adjust the width to a smaller size */
-  padding-top: 15px; /* Adjust the top padding */
-  padding-bottom: 15px; /* Adjust the bottom padding */
+  width: 120px;
+  padding-top: 15px;
+  padding-bottom: 15px;
   text-align: center;
   color: #000;
   text-transform: uppercase;
   font-weight: 600;
-  margin-left: 10px; /* Adjust the left margin for better spacing */
-  margin-bottom: 10px; /* Adjust the bottom margin */
+  margin-left: 10px;
+  margin-bottom: 10px;
   cursor: pointer;
   display: inline-block;
-  font-size: 14px; /* Adjust the font size */
+  font-size: 14px;
 }
-
 
 .button-1 {
   background-color: transparent;
@@ -97,10 +97,9 @@ h1 {
   width: 200px;
   border-radius: 5px;
   background-color: #F4F200;
-  background-image: #F4F200;
-  background-image: -moz-linear-gradient(top, #fff 0%, #F4F200 100%); 
-  background-image: -webkit-linear-gradient(top, #fff 0%,#F4F200 100%); 
-  background-image: linear-gradient(to bottom, #fff 0%,#F4F200 100%); 
+  background-image: -moz-linear-gradient(top, #fff 0%, #F4F200 100%);
+  background-image: -webkit-linear-gradient(top, #fff 0%,#F4F200 100%);
+  background-image: linear-gradient(to bottom, #fff 0%,#F4F200 100%);
   background-size: 300px;
   background-repeat: no-repeat;
   background-position: 0%;
@@ -110,4 +109,41 @@ h1 {
 .button-5:hover {
   background-position: -200%;
   transition: background 300ms ease-in-out;
+}
+
+/* New button style */
+.button-6 {
+  width: 150px;
+  background-color: #4CAF50;
+  color: white;
+  border: 3px solid #4CAF50;
+  border-radius: 25px;
+  padding: 10px 20px;
+  text-align: center;
+  font-size: 16px;
+  font-weight: bold;
+  cursor: pointer;
+  -webkit-transition: transform 0.3s ease, background-color 0.3s ease;
+  transition: transform 0.3s ease, background-color 0.3s ease;
+}
+.button-6:hover {
+  transform: scale(1.1);
+  background-color: #45a049;
+}
+.button-6::before {
+  content: '\f06e'; /* رمز أيقونة العين في Font Awesome */
+  font-family: 'Font Awesome 5 Free';
+  font-weight: 900;
+  margin-right: 8px;
+}
+
+/* أيقونة العين */
+#toggleViewButton i { 
+  font-size: 24px;
+  color: #ffffff;
+  transition: transform 0.2s;
+}
+
+#toggleViewButton:hover i {
+  transform: scale(1.2);
 }
