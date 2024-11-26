@@ -17,6 +17,7 @@
     <div id="controls" style="position: absolute; top: 10px; right: 10px; background: rgba(255, 255, 255, 0); padding: 10px; z-index: 1000; border: 1px solid #9c929200; border-radius: 5px;">
         <button id="routeButton" class="button button-3">Find Route</button>
         <button id="togglePitchButton" class="button button-3">View</button>
+        <button id="toggleViewButton" class="button button-3">Toggle View</button>
     </div>
     <div id="map"></div>
 
@@ -32,49 +33,64 @@
             container: 'map',
             style: 'mapbox://styles/hamedhadad/cm3xvrod9003g01sgap1cftwo',
             center: [35.1826, 31.96065],
-            zoom: 20.5,
+            zoom: 17,
             pitch: 45,
             bearing: 90
         });
 
-
-        document.getElementById('togglePitchButton').addEventListener('click', function() {
-        const currentPitch = map.getPitch();
-        if (currentPitch === 0) {
-            map.setPitch(45);
-        } else {
-            map.setPitch(0);
-        }
-    });
-
         let edgesData = null;
         let nodesData = null;
+        let currentView = 'building'; // Track current view state
+
+        // Load Building.geojson initially
+        fetch('Building.geojson')
+            .then(response => response.json())
+            .then(data => {
+                map.addSource('building', {
+                    type: 'geojson',
+                    data: data
+                });
+
+                map.addLayer({
+                    id: 'building-layer',
+                    type: 'fill-extrusion',
+                    source: 'building',
+                    paint: {
+                        'fill-extrusion-color': '#b0b0b0',
+                        'fill-extrusion-height': 20,  // Set the height to 20
+                        'fill-extrusion-base': 0,
+                        'fill-extrusion-opacity': 0.9
+                    }
+                });
+
+                // Fit the map to the building
+                const bounds = turf.bbox(data); // Assuming turf.js is available
+                map.fitBounds(bounds, { padding: 20 });
+            })
+            .catch(error => console.error('Error loading Building.geojson:', error));
 
         // Load Ground_Floor.geojson
-// Load Ground_Floor.geojson
-fetch('Ground_Floor.geojson')
-    .then(response => response.json())
-    .then(data => {
-        map.addSource('ground-floor', {
-            type: 'geojson',
-            data: data
-        });
+        fetch('Ground_Floor.geojson')
+            .then(response => response.json())
+            .then(data => {
+                map.addSource('ground-floor', {
+                    type: 'geojson',
+                    data: data
+                });
 
-        // Add a 3D extrusion layer for the Ground_Floor
-        map.addLayer({
-            id: 'ground-floor-3d',
-            type: 'fill-extrusion',
-            source: 'ground-floor',
-            paint: {
-                'fill-extrusion-color': '#9c9292',
-                'fill-extrusion-opacity': 0.8,
-                'fill-extrusion-height': 2, // Use the height property from your GeoJSON
-                'fill-extrusion-base': 0 // Base height (ground level)
-            }
-        });
-    })
-    .catch(error => console.error('Error loading Ground_Floor.geojson:', error));
-
+                map.addLayer({
+                    id: 'ground-floor-3d',
+                    type: 'fill-extrusion',
+                    source: 'ground-floor',
+                    paint: {
+                        'fill-extrusion-color': '#9c9292',
+                        'fill-extrusion-opacity': 0.8,
+                        'fill-extrusion-height': 2, // Use the height property from your GeoJSON
+                        'fill-extrusion-base': 0 // Base height (ground level)
+                    }
+                });
+            })
+            .catch(error => console.error('Error loading Ground_Floor.geojson:', error));
 
         // Load Nodes.geojson
         fetch('Nodes.geojson')
@@ -114,9 +130,8 @@ fetch('Ground_Floor.geojson')
                     }
                 });
 
-                if (edgesData) {
-                    buildGraphAndRoute(nodesData, edgesData);
-                }
+                // Initially, hide Node Labels
+                map.setLayoutProperty('node-labels', 'visibility', 'none');
             })
             .catch(error => console.error('Error loading Nodes.geojson:', error));
 
@@ -140,13 +155,34 @@ fetch('Ground_Floor.geojson')
                         'line-width': 2
                     }
                 });
-
-                if (nodesData) {
-                    buildGraphAndRoute(nodesData, edgesData);
-                }
             })
             .catch(error => console.error('Error loading Edges.geojson:', error));
 
+        // Toggle layers button functionality
+        document.getElementById('toggleViewButton').addEventListener('click', function () {
+            if (currentView === 'building') {
+                // Hide Building, Show Ground_Floor
+                map.setLayoutProperty('building-layer', 'visibility', 'none');
+                map.setLayoutProperty('ground-floor-3d', 'visibility', 'visible');
+                currentView = 'ground-floor';
+            } else if (currentView === 'ground-floor') {
+                // Hide Ground_Floor, Show Nodes & Edges
+                map.setLayoutProperty('ground-floor-3d', 'visibility', 'none');
+                map.setLayoutProperty('nodes-layer', 'visibility', 'visible');
+                map.setLayoutProperty('edges-layer', 'visibility', 'visible');
+                map.setLayoutProperty('node-labels', 'visibility', 'visible'); // Show Node Labels
+                currentView = 'nodes-edges';
+            } else if (currentView === 'nodes-edges') {
+                // Reset to show Building
+                map.setLayoutProperty('nodes-layer', 'visibility', 'none');
+                map.setLayoutProperty('edges-layer', 'visibility', 'none');
+                map.setLayoutProperty('node-labels', 'visibility', 'none'); // Hide Node Labels
+                map.setLayoutProperty('building-layer', 'visibility', 'visible');
+                currentView = 'building';
+            }
+        });
+
+        // Route function to find the shortest path using Dijkstra
         function buildGraphAndRoute(nodesData, edgesData) {
             var graph = {};
 
@@ -164,7 +200,7 @@ fetch('Ground_Floor.geojson')
                 }
             });
 
-            document.getElementById('routeButton').addEventListener('click', function() {
+            document.getElementById('routeButton').addEventListener('click', function () {
                 var fromNode = prompt("Enter the start node ID (e.g., NODE_015):");
                 var toNode = prompt("Enter the end node ID (e.g., NODE_027):");
 
@@ -195,8 +231,6 @@ fetch('Ground_Floor.geojson')
                     return;
                 }
 
-                console.log('Route Coordinates:', routeCoordinates);
-
                 var routeGeoJSON = {
                     "type": "Feature",
                     "geometry": {
@@ -226,6 +260,7 @@ fetch('Ground_Floor.geojson')
                 }
             });
         }
+
     </script>
 </body>
 </html>
