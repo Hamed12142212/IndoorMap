@@ -13,8 +13,9 @@
 </head>
 <body>
 
-    <div id="controls" style="position: absolute; top: 10px; right: 10px; background: white; padding: 10px; z-index: 1000; border: 1px solid #ccc; border-radius: 5px;">
+    <div id="controls" style="position: absolute; top: 10px; right: 10px; background: rgb(255, 255, 255); padding: 10px; z-index: 1000; border: 1px solid #9c9292; border-radius: 5px;">
         <button id="routeButton">Find Route</button>
+        <button id="togglePitchButton">View</button>
     </div>
     <div id="map"></div>
 
@@ -28,15 +29,51 @@
 
         var map = new mapboxgl.Map({
             container: 'map',
-            style: 'mapbox://styles/mapbox/streets-v11',
+            style: 'mapbox://styles/hamedhadad/cm3xvrod9003g01sgap1cftwo',
             center: [35.1826, 31.96065],
             zoom: 20.5,
             pitch: 45,
             bearing: 90
         });
 
+
+        document.getElementById('togglePitchButton').addEventListener('click', function() {
+        const currentPitch = map.getPitch();
+        if (currentPitch === 0) {
+            map.setPitch(45);
+        } else {
+            map.setPitch(0);
+        }
+    });
+
         let edgesData = null;
         let nodesData = null;
+
+        // Load Ground_Floor.geojson
+// Load Ground_Floor.geojson
+fetch('Ground_Floor.geojson')
+    .then(response => response.json())
+    .then(data => {
+        map.addSource('ground-floor', {
+            type: 'geojson',
+            data: data
+        });
+
+        // Add a 3D extrusion layer for the Ground_Floor
+        map.addLayer({
+            id: 'ground-floor-3d',
+            type: 'fill-extrusion',
+            source: 'ground-floor',
+            paint: {
+                'fill-extrusion-color': '#9c9292',
+                'fill-extrusion-opacity': 0.8,
+                'fill-extrusion-height': 2, // Use the height property from your GeoJSON
+                'fill-extrusion-base': 0 // Base height (ground level)
+            }
+        });
+    })
+    .catch(error => console.error('Error loading Ground_Floor.geojson:', error));
+
 
         // Load Nodes.geojson
         fetch('Nodes.geojson')
@@ -127,8 +164,8 @@
             });
 
             document.getElementById('routeButton').addEventListener('click', function() {
-                var fromNode = prompt("Enter the start node ID (e.g., NODE_001):");
-                var toNode = prompt("Enter the end node ID (e.g., NODE_002):");
+                var fromNode = prompt("Enter the start node ID (e.g., NODE_015):");
+                var toNode = prompt("Enter the end node ID (e.g., NODE_027):");
 
                 if (!fromNode || !toNode) {
                     alert("Both 'From' and 'To' nodes must be specified.");
