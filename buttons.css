@@ -8,13 +8,16 @@ body {
   color: #fff;
   text-transform: uppercase;
 }
+
 .container {
   text-align: center;
 }
+
 h1 {
   margin-left: 30px;
   margin-bottom: 50px;
 }
+
 .button {
   width: 120px;
   padding-top: 15px;
@@ -38,6 +41,7 @@ h1 {
   transition: all .15s ease-in-out;
   color: #00d7c3;
 }
+
 .button-1:hover {
   box-shadow: 0 0 10px 0 #00d7c3 inset, 0 0 20px 2px #00d7c3;
   border: 3px solid #00d7c3;
@@ -54,6 +58,7 @@ h1 {
   -webkit-transition: background 300ms ease-in-out;
   transition: background 300ms ease-in-out;
 }
+
 .button-2:hover {
   background-position: 100%;
   color: #c266d3;
@@ -66,6 +71,7 @@ h1 {
   color: #fff;
   transition: .3s;
 }
+
 .button-3:hover {
   box-shadow: 8px 8px #99bdff;
   transition: .3s;
@@ -77,10 +83,12 @@ h1 {
   color: #ff0251;
   transition: .3s;
 }
+
 .button-4:hover {
   animation: pulse 1s infinite;
   transition: .3s;
 }
+
 @keyframes pulse {
   0% {
     transform: scale(1);
@@ -88,7 +96,7 @@ h1 {
   70% {
     transform: scale(.9);
   }
-    100% {
+  100% {
     transform: scale(1);
   }
 }
@@ -98,47 +106,41 @@ h1 {
   border-radius: 5px;
   background-color: #F4F200;
   background-image: -moz-linear-gradient(top, #fff 0%, #F4F200 100%);
-  background-image: -webkit-linear-gradient(top, #fff 0%,#F4F200 100%);
-  background-image: linear-gradient(to bottom, #fff 0%,#F4F200 100%);
+  background-image: -webkit-linear-gradient(top, #fff 0%, #F4F200 100%);
+  background-image: linear-gradient(to bottom, #fff 0%, #F4F200 100%);
   background-size: 300px;
   background-repeat: no-repeat;
   background-position: 0%;
   -webkit-transition: background 300ms ease-in-out;
   transition: background 300ms ease-in-out;
 }
+
 .button-5:hover {
   background-position: -200%;
   transition: background 300ms ease-in-out;
 }
 
-/* New button style */
-.button-6 {
-  width: 150px;
+/* زر العين الجديد */
+#toggleViewButton {
+  width: 120px;
+  padding: 10px;
   background-color: #4CAF50;
   color: white;
   border: 3px solid #4CAF50;
   border-radius: 25px;
-  padding: 10px 20px;
   text-align: center;
-  font-size: 16px;
-  font-weight: bold;
   cursor: pointer;
   -webkit-transition: transform 0.3s ease, background-color 0.3s ease;
   transition: transform 0.3s ease, background-color 0.3s ease;
 }
-.button-6:hover {
+
+#toggleViewButton:hover {
   transform: scale(1.1);
   background-color: #45a049;
 }
-.button-6::before {
-  content: '\f06e'; /* رمز أيقونة العين في Font Awesome */
-  font-family: 'Font Awesome 5 Free';
-  font-weight: 900;
-  margin-right: 8px;
-}
 
 /* أيقونة العين */
-#toggleViewButton i { 
+#toggleViewButton i {
   font-size: 24px;
   color: #ffffff;
   transition: transform 0.2s;
