@@ -32,13 +32,8 @@ export function initializeRouteModal(map, graph, nodesData, dijkstra) {
     const fromNodeInput = document.getElementById('fromNodeInput');
     const toNodeInput = document.getElementById('toNodeInput');
 
-    // Show modal when Find Route button is clicked
-    routeButton.addEventListener('click', () => {
-        routeModal.style.display = 'flex';
-    });
 
-
-        // Add event listeners to input fields
+    // Add event listeners to input fields
 fromNodeInput.addEventListener('keypress', function(event) {
     if (event.key === 'Enter') {
         findRouteModalBtn.click();
@@ -51,6 +46,11 @@ toNodeInput.addEventListener('keypress', function(event) {
     }
 });
 
+
+    // Show modal when Find Route button is clicked
+    routeButton.addEventListener('click', () => {
+        routeModal.style.display = 'flex';
+    });
 
     // Cancel button closes the modal
     cancelRouteModalBtn.addEventListener('click', () => {
