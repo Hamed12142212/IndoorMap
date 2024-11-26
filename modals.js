@@ -37,6 +37,21 @@ export function initializeRouteModal(map, graph, nodesData, dijkstra) {
         routeModal.style.display = 'flex';
     });
 
+
+        // Add event listeners to input fields
+fromNodeInput.addEventListener('keypress', function(event) {
+    if (event.key === 'Enter') {
+        findRouteModalBtn.click();
+    }
+});
+
+toNodeInput.addEventListener('keypress', function(event) {
+    if (event.key === 'Enter') {
+        findRouteModalBtn.click();
+    }
+});
+
+
     // Cancel button closes the modal
     cancelRouteModalBtn.addEventListener('click', () => {
         routeModal.style.display = 'none';
