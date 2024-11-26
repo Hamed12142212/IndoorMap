@@ -17,6 +17,7 @@
     <div id="controls" style="position: absolute; top: 10px; right: 10px; background: rgba(255, 255, 255, 0); padding: 10px; z-index: 1000; border: 1px solid #9c929200; border-radius: 5px;">
         <button id="routeButton" class="button button-3">Find Route</button>
         <button id="togglePitchButton" class="button button-3">View</button>
+         <button id="toggleLayersButton" class="button button-3">Hide Nodes/Edges</button>
     </div>
     <div id="map"></div>
 
@@ -46,6 +47,26 @@
             map.setPitch(0);
         }
     });
+
+            // New function to toggle nodes and edges layer visibility
+        document.getElementById('toggleLayersButton').addEventListener('click', function() {
+            const nodesLayerVisibility = map.getLayoutProperty('nodes-layer', 'visibility');
+            const edgesLayerVisibility = map.getLayoutProperty('edges-layer', 'visibility');
+            const nodeLabelsVisibility = map.getLayoutProperty('node-labels', 'visibility');
+
+            if (nodesLayerVisibility === 'visible' || nodesLayerVisibility === undefined) {
+                map.setLayoutProperty('nodes-layer', 'visibility', 'none');
+                map.setLayoutProperty('edges-layer', 'visibility', 'none');
+                map.setLayoutProperty('node-labels', 'visibility', 'none');
+                this.textContent = 'Show Nodes/Edges';
+            } else {
+                map.setLayoutProperty('nodes-layer', 'visibility', 'visible');
+                map.setLayoutProperty('edges-layer', 'visibility', 'visible');
+                map.setLayoutProperty('node-labels', 'visibility', 'visible');
+                this.textContent = 'Hide Nodes/Edges';
+            }
+        });
+        
 
         let edgesData = null;
         let nodesData = null;
