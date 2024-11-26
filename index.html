@@ -37,43 +37,63 @@
             bearing: 90
         });
 
+        // Add 3D Buildings Layer
+        map.on('load', function() {
+            // Add the buildings layer
+            map.addSource('buildings', {
+                type: 'vector',
+                url: 'mapbox://mapbox.terrain-buildings'
+            });
+
+            map.addLayer({
+                id: 'buildings-3d',
+                type: 'fill-extrusion',
+                source: 'buildings',
+                'source-layer': 'building',
+                paint: {
+                    'fill-extrusion-color': '#aaa',
+                    'fill-extrusion-height': 20, // Fixed height of 20
+                    'fill-extrusion-base': 0,
+                    'fill-extrusion-opacity': 0.6
+                }
+            });
+        });
 
         document.getElementById('togglePitchButton').addEventListener('click', function() {
-        const currentPitch = map.getPitch();
-        if (currentPitch === 0) {
-            map.setPitch(45);
-        } else {
-            map.setPitch(0);
-        }
-    });
+            const currentPitch = map.getPitch();
+            if (currentPitch === 0) {
+                map.setPitch(45);
+            } else {
+                map.setPitch(0);
+            }
+        });
 
         let edgesData = null;
         let nodesData = null;
 
         // Load Ground_Floor.geojson
-// Load Ground_Floor.geojson
-fetch('Ground_Floor.geojson')
-    .then(response => response.json())
-    .then(data => {
-        map.addSource('ground-floor', {
-            type: 'geojson',
-            data: data
-        });
+        fetch('Ground_Floor.geojson')
+            .then(response => response.json())
+            .then(data => {
+                map.addSource('ground-floor', {
+                    type: 'geojson',
+                    data: data
+                });
 
-        // Add a 3D extrusion layer for the Ground_Floor
-        map.addLayer({
-            id: 'ground-floor-3d',
-            type: 'fill-extrusion',
-            source: 'ground-floor',
-            paint: {
-                'fill-extrusion-color': '#9c9292',
-                'fill-extrusion-opacity': 0.8,
-                'fill-extrusion-height': 2, // Use the height property from your GeoJSON
-                'fill-extrusion-base': 0 // Base height (ground level)
-            }
-        });
-    })
-    .catch(error => console.error('Error loading Ground_Floor.geojson:', error));
+                // Add a 3D extrusion layer for the Ground_Floor
+                map.addLayer({
+                    id: 'ground-floor-3d',
+                    type: 'fill-extrusion',
+                    source: 'ground-floor',
+                    paint: {
+                        'fill-extrusion-color': '#9c9292',
+                        'fill-extrusion-opacity': 0.8,
+                        'fill-extrusion-height': 2, // Use the height property from your GeoJSON
+                        'fill-extrusion-base': 0 // Base height (ground level)
+                    }
+                });
+            })
+            .catch(error => console.error('Error loading Ground_Floor.geojson:', error));
 
 
         // Load Nodes.geojson
