@@ -17,7 +17,7 @@
     <div id="controls" style="position: absolute; top: 10px; right: 10px; background: rgba(255, 255, 255, 0); padding: 10px; z-index: 1000; border: 1px solid #9c929200; border-radius: 5px;">
         <button id="routeButton" class="button button-3">Find Route</button>
         <button id="togglePitchButton" class="button button-3">View</button>
-         <button id="toggleLayersButton" class="button button-3">Hide Nodes/Edges</button>
+        <button id="toggleViewButton" class="button button-3">Toggle View</button>
     </div>
     <div id="map"></div>
 
@@ -32,12 +32,11 @@
         var map = new mapboxgl.Map({
             container: 'map',
             style: 'mapbox://styles/hamedhadad/cm3xvrod9003g01sgap1cftwo',
-            center: [35.1826, 31.96065],
-            zoom: 20.5,
+            center: [35.1820, 31.96000],
+            zoom: 17,
             pitch: 45,
             bearing: 90
         });
-
 
         document.getElementById('togglePitchButton').addEventListener('click', function() {
         const currentPitch = map.getPitch();
@@ -48,30 +47,38 @@
         }
     });
 
-            // New function to toggle nodes and edges layer visibility
-        document.getElementById('toggleLayersButton').addEventListener('click', function() {
-            const nodesLayerVisibility = map.getLayoutProperty('nodes-layer', 'visibility');
-            const edgesLayerVisibility = map.getLayoutProperty('edges-layer', 'visibility');
-            const nodeLabelsVisibility = map.getLayoutProperty('node-labels', 'visibility');
-
-            if (nodesLayerVisibility === 'visible' || nodesLayerVisibility === undefined) {
-                map.setLayoutProperty('nodes-layer', 'visibility', 'none');
-                map.setLayoutProperty('edges-layer', 'visibility', 'none');
-                map.setLayoutProperty('node-labels', 'visibility', 'none');
-                this.textContent = 'Show Nodes/Edges';
-            } else {
+            // Toggle layers button functionality
+            document.getElementById('toggleViewButton').addEventListener('click', function () {
+            if (currentView === 'building') {
+                // Hide Building, Show Ground_Floor
+                map.setLayoutProperty('building-layer-3d', 'visibility', 'none');
+                map.setLayoutProperty('ground-floor-3d', 'visibility', 'visible');
+                                   map.flyTo({ center: [35.1826, 31.96065], zoom: 20.5 }); // Zoom to Ground Floor
+                currentView = 'ground-floor';
+            } else if (currentView === 'ground-floor') {
+                // Hide Ground_Floor, Show Nodes & Edges
+                map.setLayoutProperty('ground-floor-3d', 'visibility', 'none');
                 map.setLayoutProperty('nodes-layer', 'visibility', 'visible');
                 map.setLayoutProperty('edges-layer', 'visibility', 'visible');
-                map.setLayoutProperty('node-labels', 'visibility', 'visible');
-                this.textContent = 'Hide Nodes/Edges';
+                map.setLayoutProperty('node-labels', 'visibility', 'visible'); // Show Node Labels
+                              map.flyTo({ center: [35.1826, 31.96065], zoom: 20.5 }); // Zoom to Ground Floor
+                currentView = 'nodes-edges';
+            } else if (currentView === 'nodes-edges') {
+                // Reset to show Building
+                map.setLayoutProperty('nodes-layer', 'visibility', 'none');
+                map.setLayoutProperty('edges-layer', 'visibility', 'none');
+                map.setLayoutProperty('node-labels', 'visibility', 'none'); // Hide Node Labels
+                map.setLayoutProperty('building-layer-3d', 'visibility', 'visible');
+                                   map.flyTo({ center: [35.1820, 31.96000], zoom: 17 }); // Reset to Building
+                currentView = 'building';
             }
         });
-        
 
         let edgesData = null;
         let nodesData = null;
+        let currentView = 'building'; // Default view
 
-        // Load Ground_Floor.geojson
+        
 // Load Ground_Floor.geojson
 fetch('Ground_Floor.geojson')
     .then(response => response.json())
@@ -86,6 +93,7 @@ fetch('Ground_Floor.geojson')
             id: 'ground-floor-3d',
             type: 'fill-extrusion',
             source: 'ground-floor',
+                       layout: { visibility: 'none' }, // تعطيل الطبقة افتراضيًا
             paint: {
                 'fill-extrusion-color': '#9c9292',
                 'fill-extrusion-opacity': 0.8,
@@ -96,6 +104,29 @@ fetch('Ground_Floor.geojson')
     })
     .catch(error => console.error('Error loading Ground_Floor.geojson:', error));
 
+    // Load Ground_Floor.geojson
+fetch('BZUBuildings.geojson')
+    .then(response => response.json())
+    .then(data => {
+        map.addSource('building-layer', {
+            type: 'geojson',
+            data: data
+        });
+
+        // Add a 3D extrusion layer for the Ground_Floor
+        map.addLayer({
+            id: 'building-layer-3d',
+            type: 'fill-extrusion',
+            source: 'building-layer',
+                  
+            paint: {
+                'fill-extrusion-color': '#9c9292',
+                'fill-extrusion-opacity': 0.8,
+                'fill-extrusion-height': 15, // Use the height property from your GeoJSON
+                'fill-extrusion-base': 0 // Base height (ground level)
+            }
+        });
+    })
 
         // Load Nodes.geojson
         fetch('Nodes.geojson')
@@ -112,9 +143,7 @@ fetch('Ground_Floor.geojson')
                     id: 'nodes-layer',
                     type: 'circle',
                     source: 'nodes',
-                    layout: {
-                    'visibility': 'none' // Add this line
-                     },
+                                      layout: { visibility: 'none' }, // تعطيل الطبقة افتراضيًا
                     paint: {
                         'circle-radius': 6,
                         'circle-color': '#ff5733'
@@ -126,7 +155,6 @@ fetch('Ground_Floor.geojson')
                     type: 'symbol',
                     source: 'nodes',
                     layout: {
-                        'visibility': 'none',
                         'text-field': ['get', 'NODE_ID'],
                         'text-size': 12,
                         'text-anchor': 'top',
@@ -160,9 +188,7 @@ fetch('Ground_Floor.geojson')
                     id: 'edges-layer',
                     type: 'line',
                     source: 'edges',
-                        layout: {
-                             'visibility': 'none'
-                                },
+                                      layout: { visibility: 'none' }, // تعطيل الطبقة افتراضيًا
                     paint: {
                         'line-color': '#00f',
                         'line-width': 2
@@ -257,3 +283,4 @@ fetch('Ground_Floor.geojson')
     </script>
 </body>
 </html>
+
