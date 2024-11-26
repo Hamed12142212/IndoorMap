@@ -10,12 +10,26 @@
     <style>
         body { margin: 0; padding: 0; }
         #map { width: 100%; height: 100vh; }
+        #controls {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background: rgba(255, 255, 255, 0.9);
+            padding: 10px;
+            z-index: 1000;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+        }
+        .button {
+            margin-bottom: 5px;
+            display: block;
+        }
     </style>
 </head>
 <body>
-    <div id="controls" style="position: absolute; top: 10px; right: 10px; background: rgba(255, 255, 255, 0); padding: 10px; z-index: 1000; border: 1px solid #9c929200; border-radius: 5px;">
+    <div id="controls">
         <button id="routeButton" class="button button-3">Find Route</button>
-        <button id="togglePitchButton" class="button button-3">View</button>
+        <button id="togglePitchButton" class="button button-3">Toggle Pitch</button>
         <button id="toggleViewButton" class="button button-3">Toggle View</button>
     </div>
     <div id="map"></div>
@@ -37,11 +51,7 @@
         // Pitch Toggle Button
         document.getElementById('togglePitchButton').addEventListener('click', function() {
             const currentPitch = map.getPitch();
-            if (currentPitch === 0) {
-                map.setPitch(45);
-            } else {
-                map.setPitch(0);
-            }
+            map.setPitch(currentPitch === 0 ? 45 : 0);
         });
 
         let edgesData = null;
@@ -165,12 +175,12 @@
             .catch(error => console.error('Error loading Building.geojson:', error));
 
         function buildGraphAndRoute(nodesData, edgesData) {
-            var graph = {};
+            const graph = {};
 
-            edgesData.features.forEach(function(edge) {
-                var from = edge.properties.Start_NODE;
-                var to = edge.properties.End_NODE;
-                var weight = edge.properties.Shape_Length;
+            edgesData.features.forEach(edge => {
+                const from = edge.properties.Start_NODE;
+                const to = edge.properties.End_NODE;
+                const weight = edge.properties.Shape_Length;
 
                 if (!graph[from]) graph[from] = [];
                 if (!graph[to]) graph[to] = [];
@@ -181,9 +191,9 @@
                 }
             });
 
-            document.getElementById('routeButton').addEventListener('click', function() {
-                var fromNode = prompt("Enter the start node ID (e.g., NODE_015):");
-                var toNode = prompt("Enter the end node ID (e.g., NODE_027):");
+            document.getElementById('routeButton').addEventListener('click', () => {
+                const fromNode = prompt("Enter the start node ID (e.g., NODE_015):");
+                const toNode = prompt("Enter the end node ID (e.g., NODE_027):");
 
                 if (!fromNode || !toNode) {
                     alert("Both 'From' and 'To' nodes must be specified.");
@@ -195,28 +205,23 @@
                     return;
                 }
 
-                var route = dijkstra(graph, fromNode, toNode);
+                const route = dijkstra(graph, fromNode, toNode);
 
-                var routeCoordinates = [];
-                route.forEach(function(nodeID) {
-                    var node = nodesData.features.find(function(feature) {
-                        return feature.properties.NODE_ID === nodeID;
-                    });
-                    if (node) {
-                        routeCoordinates.push([node.properties.X, node.properties.Y]);
-                    }
-                });
+                const routeCoordinates = route.map(nodeID => {
+                    const node = nodesData.features.find(feature => feature.properties.NODE_ID === nodeID);
+                    return node ? [node.properties.X, node.properties.Y] : null;
+                }).filter(coord => coord);
 
                 if (routeCoordinates.length === 0) {
                     alert("No route found between the specified nodes.");
                     return;
                 }
 
-                var routeGeoJSON = {
-                    "type": "Feature",
-                    "geometry": {
-                        "type": "LineString",
-                        "coordinates": routeCoordinates
+                const routeGeoJSON = {
+                    type: "Feature",
+                    geometry: {
+                        type: "LineString",
+                        coordinates: routeCoordinates
                     }
                 };
 
@@ -243,21 +248,19 @@
         }
 
         // Toggle layers button functionality
-        document.getElementById('toggleViewButton').addEventListener('click', function () {
+        document.getElementById('toggleViewButton').addEventListener('click', () => {
             const buildingLayer = map.getLayer('building-layer');
             const groundFloorLayer = map.getLayer('ground-floor-3d');
             const edgesLayer = map.getLayer('edges-layer');
             const nodesLayer = map.getLayer('nodes-layer');
 
             if (buildingLayer && groundFloorLayer) {
-                // Hide Building and Ground_Floor, show Edges and Nodes
                 map.setLayoutProperty('building-layer', 'visibility', 'none');
                 map.setLayoutProperty('ground-floor-3d', 'visibility', 'none');
                 if (edgesLayer) map.setLayoutProperty('edges-layer', 'visibility', 'visible');
                 if (nodesLayer) map.setLayoutProperty('nodes-layer', 'visibility', 'visible');
                 alert('You are now viewing the network (Edges & Nodes).');
             } else if (edgesLayer && nodesLayer) {
-                // Show Building and Ground_Floor, hide Edges and Nodes
                 if (map.getSource('building')) {
                     map.setLayoutProperty('building-layer', 'visibility', 'visible');
                 } else {
