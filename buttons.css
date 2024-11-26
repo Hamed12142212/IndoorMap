@@ -16,18 +16,18 @@ h1 {
   margin-bottom: 50px;
 }
 .button {
-  width: 120px; /* Adjust the width to a smaller size */
-  padding-top: 15px; /* Adjust the top padding */
-  padding-bottom: 15px; /* Adjust the bottom padding */
+  width: 120px;
+  padding-top: 15px;
+  padding-bottom: 15px;
   text-align: center;
   color: #000;
   text-transform: uppercase;
   font-weight: 600;
-  margin-left: 10px; /* Adjust the left margin for better spacing */
-  margin-bottom: 10px; /* Adjust the bottom margin */
+  margin-left: 10px;
+  margin-bottom: 10px;
   cursor: pointer;
   display: inline-block;
-  font-size: 14px; /* Adjust the font size */
+  font-size: 14px;
 }
 
 .button-1 {
@@ -97,10 +97,9 @@ h1 {
   width: 200px;
   border-radius: 5px;
   background-color: #F4F200;
-  background-image: #F4F200;
-  background-image: -moz-linear-gradient(top, #fff 0%, #F4F200 100%); 
-  background-image: -webkit-linear-gradient(top, #fff 0%,#F4F200 100%); 
-  background-image: linear-gradient(to bottom, #fff 0%,#F4F200 100%); 
+  background-image: -moz-linear-gradient(top, #fff 0%, #F4F200 100%);
+  background-image: -webkit-linear-gradient(top, #fff 0%,#F4F200 100%);
+  background-image: linear-gradient(to bottom, #fff 0%,#F4F200 100%);
   background-size: 300px;
   background-repeat: no-repeat;
   background-position: 0%;
@@ -136,4 +135,15 @@ h1 {
   font-family: 'Font Awesome 5 Free';
   font-weight: 900;
   margin-right: 8px;
+}
+
+/* أيقونة العين */
+#toggleViewButton i { 
+  font-size: 24px;
+  color: #ffffff;
+  transition: transform 0.2s;
+}
+
+#toggleViewButton:hover i {
+  transform: scale(1.2);
 }
