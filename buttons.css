@@ -29,7 +29,6 @@ h1 {
   font-size: 14px; /* Adjust the font size */
 }
 
-
 .button-1 {
   background-color: transparent;
   border: 3px solid #00d7c3;
@@ -110,4 +109,24 @@ h1 {
 .button-5:hover {
   background-position: -200%;
   transition: background 300ms ease-in-out;
+}
+
+/* New button style */
+.button-6 {
+  width: 150px;
+  background-color: #4CAF50;
+  color: white;
+  border: 3px solid #4CAF50;
+  border-radius: 25px;
+  padding: 10px 20px;
+  text-align: center;
+  font-size: 16px;
+  font-weight: bold;
+  cursor: pointer;
+  -webkit-transition: transform 0.3s ease, background-color 0.3s ease;
+  transition: transform 0.3s ease, background-color 0.3s ease;
+}
+.button-6:hover {
+  transform: scale(1.1);
+  background-color: #45a049;
 }
