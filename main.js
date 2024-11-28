@@ -1,4 +1,4 @@
-import { dijkstra } from './dijkstra.js';
+import { dijkstra, buildGraph } from './dijkstra.js'; 
 import { initializeRouteModal } from './modals.js';
 
 mapboxgl.accessToken = 'pk.eyJ1IjoiaGFtZWRoYWRhZCIsImEiOiJjbTNsdHBwaG4wbXo1MmxzZHQ2bGM2azFvIn0.pp7ow3gyNYL7pIA0ZQmHuw';
@@ -172,22 +172,7 @@ map.on('load', function() {
     });
 });
 
-function buildGraph(edgesData) {
-    const graph = {};
 
-    edgesData.features.forEach(function(edge) {
-        const from = edge.properties.Start_NODE;
-        const to = edge.properties.End_NODE;
-        const weight = edge.properties.Shape_Length;
 
-        if (!graph[from]) graph[from] = [];
-        if (!graph[to]) graph[to] = [];
 
-        graph[from].push({ node: to, weight: weight });
-        if (!edge.properties.isOneWay) {
-            graph[to].push({ node: from, weight: weight });
-        }
-    });
 
-    return graph;
-}

@@ -1,5 +1,5 @@
 
-import { dijkstra } from './dijkstra.js';
+
 export function initializeRouteModal(map, graph, nodesData, dijkstra) {
     // Create modal HTML
     const modalHTML = `
@@ -61,31 +61,36 @@ toNodeInput.addEventListener('keypress', function(event) {
     findRouteModalBtn.addEventListener('click', () => {
         const fromNode = fromNodeInput.value.trim();
         const toNode = toNodeInput.value.trim();
-
+    
         // Close the modal
         routeModal.style.display = 'none';
-
+    
         if (!fromNode || !toNode) {
             alert("Both 'From' and 'To' nodes must be specified.");
             return;
         }
-
+    
         if (!graph[fromNode] || !graph[toNode]) {
             alert("One or both of the specified nodes do not exist in the graph.");
             return;
         }
-
-        const route = dijkstra(graph, fromNode, toNode);
-
-        const routeCoordinates = [];
-        route.forEach(nodeID => {
+    
+        // Ensure nodesData is passed as the second argument
+        const route = dijkstra(graph, nodesData, fromNode, toNode);
+    
+        if (route.length === 0) {
+            alert("No route found between the specified nodes.");
+            return;
+        }
+    
+        const routeCoordinates = route.map(nodeID => {
             const node = nodesData.features.find(feature => 
                 feature.properties.NODE_ID === nodeID
             );
-            if (node) {
-                routeCoordinates.push([node.properties.X, node.properties.Y]);
-            }
-        });
+            return node ? [node.properties.X, node.properties.Y] : null;
+        }).filter(coord => coord !== null);
+
+        
 
         if (routeCoordinates.length === 0) {
             alert("No route found between the specified nodes.");
