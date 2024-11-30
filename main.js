@@ -20,7 +20,8 @@ map.on('load', function() {
         { url: 'Ground_Floor.geojson', type: 'ground-floor' },
         { url: 'BZUBuildings.geojson', type: 'building-layer' },
         { url: 'Nodes.geojson', type: 'nodes' },
-        { url: 'Edges.geojson', type: 'edges' }
+        { url: 'Edges.geojson', type: 'edges' },
+        { url: 'Stairs.geojson', type: 'stairs' }
     ];
 
     // Function to load a single data source
@@ -101,6 +102,8 @@ map.on('load', function() {
                         });
                         break;
 
+                        
+
                     case 'edges':
                         map.addLayer({
                             id: 'edges-layer',
@@ -113,7 +116,25 @@ map.on('load', function() {
                             }
                         });
                         break;
+
+                        case 'stairs': // Add the stairs layer
+                        map.addLayer({
+                            id: 'stairs-3d',
+                            type: 'fill-extrusion',
+                            source: 'stairs',
+                            layout: { visibility: 'none' },
+                            paint: {
+                                'fill-extrusion-color': '#9c9292',
+                                'fill-extrusion-opacity': 1,
+                                'fill-extrusion-height': ['get', 'Height'],
+                                'fill-extrusion-base': 0
+                            }
+                        });
+                        break;
                 }
+                
+
+
 
                 return data;
             })
@@ -140,11 +161,13 @@ map.on('load', function() {
             // Hide Building, Show Ground_Floor
             map.setLayoutProperty('building-layer-3d', 'visibility', 'none');
             map.setLayoutProperty('ground-floor-3d', 'visibility', 'visible');
+            map.setLayoutProperty('stairs-3d', 'visibility', 'visible');
             map.flyTo({ center: [35.1826, 31.96065], zoom: 20.5 }); // Zoom to Ground Floor
             currentView = 'ground-floor';
         } else if (currentView === 'ground-floor') {
             // Hide Ground_Floor, Show Nodes & Edges
             map.setLayoutProperty('ground-floor-3d', 'visibility', 'none');
+            map.setLayoutProperty('stairs-3d', 'visibility', 'none');
             map.setLayoutProperty('nodes-layer', 'visibility', 'visible');
             map.setLayoutProperty('edges-layer', 'visibility', 'visible');
             map.setLayoutProperty('node-labels', 'visibility', 'visible'); // Show Node Labels
@@ -152,6 +175,7 @@ map.on('load', function() {
             currentView = 'nodes-edges';
         } else if (currentView === 'nodes-edges') {
             // Reset to show Building
+            map.setLayoutProperty('stairs-3d', 'visibility', 'none');
             map.setLayoutProperty('nodes-layer', 'visibility', 'none');
             map.setLayoutProperty('edges-layer', 'visibility', 'none');
             map.setLayoutProperty('node-labels', 'visibility', 'none'); // Hide Node Labels
