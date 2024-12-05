@@ -21,7 +21,7 @@ let graphGlobal = null;
 const roomToNodeMapping = {
     '162': 'NODE_017',
     '150': 'NODE_041',
-    '152': 'NODE_027',
+    '152': 'NODE_025',
     '101': 'NODE_035',
     '102': 'NODE_001',
     '112': 'NODE_034',
