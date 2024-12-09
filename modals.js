@@ -32,6 +32,7 @@ export function initializeRouteModal(map, graph, nodesData, dijkstra) {
     const fromNodeInput = document.getElementById('fromNodeInput');
     const toNodeInput = document.getElementById('toNodeInput');
 
+    
 
     // Add event listeners to input fields
 fromNodeInput.addEventListener('keypress', function(event) {
@@ -290,13 +291,34 @@ toNodeInput.addEventListener('keypress', function(event) {
                             }
                         });
     
-                        // Add click event to the transition marker
-                        map.on('click', 'floor-transition-marker', () => {
-                            if (currentStepIndex < steps.length - 1) {
-                                currentStepIndex++;
-                                updateStepDisplay();
-                            }
-                        });
+                        
+// Modify the click event for floor transition marker
+map.on('click', 'floor-transition-marker', () => {
+    // Add a small delay to ensure previous operations have completed
+    setTimeout(() => {
+        if (currentStepIndex < steps.length - 1) {
+            // Explicitly check the next step's existence and floor
+            const nextStep = steps[currentStepIndex + 1];
+            if (nextStep && nextStep.length > 0) {
+                const currentNode = nodesData.features.find(feature => 
+                    feature.properties.NODE_ID === steps[currentStepIndex][0]
+                );
+                const nextNode = nodesData.features.find(feature => 
+                    feature.properties.NODE_ID === nextStep[0]
+                );
+
+                // Ensure both current and next nodes exist and are on different floors
+                if (currentNode && nextNode && 
+                    currentNode.properties.Floor !== nextNode.properties.Floor) {
+                    currentStepIndex++;
+                    updateStepDisplay();
+                } else {
+                    console.warn('Floor transition not valid or nodes not found');
+                }
+            }
+        }
+    }, 100); // Small 100ms delay to allow previous operations to complete
+});
     
                         // Change cursor to pointer when hovering over the marker
                         map.on('mouseenter', 'floor-transition-marker', () => {

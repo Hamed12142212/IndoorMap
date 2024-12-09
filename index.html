@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Mapbox Route Example</title>
+    <title>Indoor Map</title>
     <script src="https://api.mapbox.com/mapbox-gl-js/v2.10.0/mapbox-gl.js"></script>
     <link href="https://api.mapbox.com/mapbox-gl-js/v2.10.0/mapbox-gl.css" rel="stylesheet">
     <link rel="stylesheet" href="buttons.css">
@@ -11,19 +11,84 @@
         body { margin: 0; padding: 0; }
         #map { width: 100%; height: 100vh; }
     </style>
+
 </head>
 <body>
-    <div id="controls" style="position: absolute; top: 10px; right: 10px; background: rgba(255, 255, 255, 0); padding: 10px; z-index: 1000; border: 1px solid #9c929200; border-radius: 5px;">
-        <button id="routeButton" class="button button-3">Find Route</button>
-        <button id="togglePitchButton" class="button button-3">View</button>
-        <button id="toggleViewButton" class="button button-3">Toggle View</button>
-    </div>
 
     <div id="map"></div>
 
+
+    <div class="floor-selector-container">
+      <div class="current-floor">0</div>
+      <div class="floor-selector">
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="floor-selector-icon">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M6.429 9.75 2.25 12l4.179 2.25m0-4.5 5.571 3 5.571-3m-11.142 0L2.25 7.5 12 2.25l9.75 5.25-4.179 2.25m0 0L21.75 12l-4.179 2.25m0 0 4.179 2.25L12 21.75 2.25 16.5l4.179-2.25m11.142 0-5.571 3-5.571-3" />
+        </svg>
+        
+        
+        
+        <div class="floor-numbers">
+          <div class="floor-number" data-floor="ground">0</div>
+          <div class="floor-number" data-floor="first">1</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="action-wrap">
+        <button id="routeButton" class="action" type="button">
+            
+              <svg class="action-icon"
+               xmlns="http://www.w3.org/2000/svg"
+                viewBox="0 0 24 24" fill="currentColor"
+                 class="size-6">
+                <path fill-rule="evenodd" d="M10.5 3.75a6.75 6.75 0 1 0 0 13.5 6.75 6.75 0 0 0 0-13.5ZM2.25 10.5a8.25 8.25 0 1 1 14.59 5.28l4.69 4.69a.75.75 0 1 1-1.06 1.06l-4.69-4.69A8.25 8.25 0 0 1 2.25 10.5Z" clip-rule="evenodd" />
+              </svg>
+              
+          <span class="action-content" data-content="Find Route"></span>
+        </button>
+        
+        <button id="togglePitchButton" class="action" type="button">
+            
+            <svg
+            class="action-icon"
+             xmlns="http://www.w3.org/2000/svg"
+              viewBox="0 0 24 24" 
+              fill="currentColor" 
+              class="size-6">
+                <path d="M12.378 1.602a.75.75 0 0 0-.756 0L3 6.632l9 5.25 9-5.25-8.622-5.03ZM21.75 7.93l-9 5.25v9l8.628-5.032a.75.75 0 0 0 .372-.648V7.93ZM11.25 22.18v-9l-9-5.25v8.57a.75.75 0 0 0 .372.648l8.628 5.033Z" />
+              </svg>
+              
+          <span class="action-content" data-content="Dimension"></span>
+        </button>
+
+        <button id="toggleViewButton" class="action" type="button">
+            <svg
+            class="action-icon"
+            
+            xmlns="http://www.w3.org/2000/svg"
+            viewBox="0 0 24 24"
+            fill="currentColor"
+            class="size-6">
+            <path fill-rule="evenodd" d="M3 2.25a.75.75 0 0 0 0 1.5v16.5h-.75a.75.75 0 0 0 0 1.5H15v-18a.75.75 0 0 0 0-1.5H3ZM6.75 19.5v-2.25a.75.75 0 0 1 .75-.75h3a.75.75 0 0 1 .75.75v2.25a.75.75 0 0 1-.75.75h-3a.75.75 0 0 1-.75-.75ZM6 6.75A.75.75 0 0 1 6.75 6h.75a.75.75 0 0 1 0 1.5h-.75A.75.75 0 0 1 6 6.75ZM6.75 9a.75.75 0 0 0 0 1.5h.75a.75.75 0 0 0 0-1.5h-.75ZM6 12.75a.75.75 0 0 1 .75-.75h.75a.75.75 0 0 1 0 1.5h-.75a.75.75 0 0 1-.75-.75ZM10.5 6a.75.75 0 0 0 0 1.5h.75a.75.75 0 0 0 0-1.5h-.75Zm-.75 3.75A.75.75 0 0 1 10.5 9h.75a.75.75 0 0 1 0 1.5h-.75a.75.75 0 0 1-.75-.75ZM10.5 12a.75.75 0 0 0 0 1.5h.75a.75.75 0 0 0 0-1.5h-.75ZM16.5 6.75v15h5.25a.75.75 0 0 0 0-1.5H21v-12a.75.75 0 0 0 0-1.5h-4.5Zm1.5 4.5a.75.75 0 0 1 .75-.75h.008a.75.75 0 0 1 .75.75v.008a.75.75 0 0 1-.75.75h-.008a.75.75 0 0 1-.75-.75v-.008Zm.75 2.25a.75.75 0 0 0-.75.75v.008c0 .414.336.75.75.75h.008a.75.75 0 0 0 .75-.75v-.008a.75.75 0 0 0-.75-.75h-.008ZM18 17.25a.75.75 0 0 1 .75-.75h.008a.75.75 0 0 1 .75.75v.008a.75.75 0 0 1-.75.75h-.008a.75.75 0 0 1-.75-.75v-.008Z" clip-rule="evenodd" />
+              </svg>
+              
+              
+          <span class="action-content" data-content="View"></span>
+        </button>
+        
+      
+        
+      
+        <div class="backdrop"></div>
+      </div>
+
     <!-- Include modules -->
+    <script type="module" src="main.js"></script>
     <script type="module" src="dijkstra.js"></script>
     <script type="module" src="modals.js"></script>
-    <script type="module" src="main.js"></script>
+    
+    
+    
+    
 </body>
 </html>
