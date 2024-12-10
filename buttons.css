@@ -304,6 +304,13 @@ h1 {
   animation: fadeInModal 0.5s forwards;
 }
 
+@media (max-width: 768px) { /* Adjust this max-width as needed */
+  #stepsModal {
+    left: 50%; 
+    transform: translateX(-50%) translateY(20px); /* Center horizontally */
+  }
+}
+
 #closeStepsModalBtn {
   position: absolute; 
   top: 5px; 
