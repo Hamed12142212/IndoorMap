@@ -306,7 +306,7 @@ h1 {
 
 @media (min-width: 375px) and (max-width: 500px) { /* Adjust this max-width as needed */
   #stepsModal {
-    left: 10%;
+    left: 100%;
     width: 300px;
     transform: translateX(-50%) translateY(20px); /* Center horizontally */
   }
