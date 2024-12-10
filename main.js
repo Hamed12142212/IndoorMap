@@ -11,7 +11,8 @@ const map = new mapboxgl.Map({
     center: [35.1820, 31.96000],
     zoom: 17,
     pitch: 45,
-    bearing: 90
+    bearing: 90,
+    doubleClickZoom: false
 });
 
 let currentView = 'building';
@@ -325,6 +326,9 @@ document.addEventListener('DOMContentLoaded', () => {
     const floorNumberButtons = document.querySelectorAll('.floor-number');
     const currentFloorSpan = document.querySelector('.current-floor');
 
+
+    
+
     // Toggle floor numbers dropdown
     floorSelector.addEventListener('click', (e) => {
         if (e.target.closest('.floor-selector-icon') || e.target.closest('.floor-selector')) {
@@ -354,6 +358,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
             // Update current floor span
             currentFloorSpan.textContent = button.textContent;
+            
+            
+        
 
             // Hide all floor layers
             map.setLayoutProperty('ground-floor-3d', 'visibility', 'none');
@@ -363,10 +370,12 @@ document.addEventListener('DOMContentLoaded', () => {
 
             // Show selected floor layers
             if (floor === 'ground') {
+                map.setLayoutProperty('building-layer-3d', 'visibility', 'none');
+                map.setLayoutProperty('stairs-3d', 'visibility', 'visible');
                 map.setLayoutProperty('ground-floor-3d', 'visibility', 'visible');
                 map.setLayoutProperty('rooms-3d', 'visibility', 'visible');
                 map.setLayoutProperty('room-labels', 'visibility', 'visible');
-                map.flyTo({ center: [35.1826, 31.96065], zoom: 20.5 });
+                
                
                 map.setPaintProperty('rooms-3d', 'fill-extrusion-color', '#32a852');
                 map.setPaintProperty('rooms-3d', 'fill-extrusion-opacity', 0.3);
@@ -378,8 +387,10 @@ document.addEventListener('DOMContentLoaded', () => {
 
 
             } else if (floor === 'first') {
+                map.setLayoutProperty('building-layer-3d', 'visibility', 'none');
+                map.setLayoutProperty('stairs-3d', 'visibility', 'visible');
                 map.setLayoutProperty('first-floor-3d', 'visibility', 'visible');
-                map.flyTo({ center: [35.1826, 31.96065], zoom: 20.5 });
+                
          
                 map.setPaintProperty('rooms-3d', 'fill-extrusion-color', '#32a852');
                 map.setPaintProperty('rooms-3d', 'fill-extrusion-opacity', 0.3);
@@ -396,3 +407,5 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     });
 });
+
+

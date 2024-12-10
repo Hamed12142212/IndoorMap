@@ -4,17 +4,22 @@ export function initializeRouteModal(map, graph, nodesData, dijkstra) {
     // Create modal HTML
     const modalHTML = `
         <div id="routeModal">
-        <div class="modal-content">
-            <h2>Find Route</h2>
-            <input type="text" id="fromNodeInput" class="modal-input" placeholder="Start Node (e.g., NODE_015)">
-            <input type="text" id="toNodeInput" class="modal-input" placeholder="End Node (e.g., NODE_027)">
-            <div class="modal-buttons">
-                <button id="cancelRouteModalBtn" class="modal-btn modal-btn-cancel">Cancel</button>
-                <button id="findRouteModalBtn" class="modal-btn modal-btn-find">Find Route</button>
-                
+            <div class="modal-content">
+                <h2>Find Route</h2>
+                <div class="input-wrapper">
+                    <input type="text" id="fromNodeInput" autocomplete="off" class="modal-input" placeholder="Start Node (e.g., NODE_015)">
+                    <div id="fromNodeDropdown" class="node-dropdown"></div>
+                </div>
+                <div class="input-wrapper">
+                    <input type="text" id="toNodeInput" autocomplete="off" class="modal-input" placeholder="End Node (e.g., NODE_027)">
+                    <div id="toNodeDropdown" class="node-dropdown"></div>
+                </div>
+                <div class="modal-buttons">
+                    <button id="cancelRouteModalBtn" class="modal-btn modal-btn-cancel">Cancel</button>
+                    <button id="findRouteModalBtn" class="modal-btn modal-btn-find">Find Route</button>
+                </div>
             </div>
         </div>
-    </div>
     `;
 
     // Append modal to body if not exists
@@ -31,42 +36,97 @@ export function initializeRouteModal(map, graph, nodesData, dijkstra) {
     const cancelRouteModalBtn = document.getElementById('cancelRouteModalBtn');
     const fromNodeInput = document.getElementById('fromNodeInput');
     const toNodeInput = document.getElementById('toNodeInput');
+    const fromNodeDropdown = document.getElementById('fromNodeDropdown');
+    const toNodeDropdown = document.getElementById('toNodeDropdown');
+    
 
     
 
     // Add event listeners to input fields
-fromNodeInput.addEventListener('keypress', function(event) {
-    if (event.key === 'Enter') {
-        findRouteModalBtn.click();
-    }
-});
+    function createNodeDropdown(inputElement, dropdownElement, nodesData) {
+        // Extract unique node IDs and sort them
+        const nodeIds = nodesData.features
+            .map(feature => feature.properties.NODE_ID)
+            .sort();
 
-toNodeInput.addEventListener('keypress', function(event) {
-    if (event.key === 'Enter') {
-        findRouteModalBtn.click();
+        // Create dropdown options
+        function updateDropdown(searchTerm) {
+            // Clear previous options
+            dropdownElement.innerHTML = '';
+
+            // Filter nodes based on input
+            const filteredNodes = nodeIds.filter(nodeId => 
+                nodeId.toLowerCase().includes(searchTerm.toLowerCase())
+            );
+
+            // Create dropdown items
+            filteredNodes.slice(0, 999).forEach(nodeId => {
+                const dropdownItem = document.createElement('div');
+                dropdownItem.classList.add('dropdown-item');
+                dropdownItem.textContent = nodeId;
+                dropdownItem.addEventListener('click', () => {
+                    inputElement.value = nodeId;
+                    dropdownElement.style.display = 'none';
+                });
+                dropdownElement.appendChild(dropdownItem);
+            });
+
+            // Show/hide dropdown based on results
+            dropdownElement.style.display = filteredNodes.length > 0 ? 'block' : 'none';
+        }
+
+        // Add event listeners for input
+        inputElement.addEventListener('input', (e) => {
+            updateDropdown(e.target.value);
+        });
+
+        // Close dropdown when clicking outside
+        document.addEventListener('click', (e) => {
+            if (!inputElement.contains(e.target) && !dropdownElement.contains(e.target)) {
+                dropdownElement.style.display = 'none';
+            }
+        });
+
+        // Show dropdown when input is focused
+        inputElement.addEventListener('focus', (e) => {
+            updateDropdown(e.target.value);
+        });
     }
-});
+
+    // Initialize dropdowns for both inputs
+    createNodeDropdown(fromNodeInput, fromNodeDropdown, nodesData);
+    createNodeDropdown(toNodeInput, toNodeDropdown, nodesData);
 
 
     // Show modal when Find Route button is clicked
     routeButton.addEventListener('click', () => {
         routeModal.style.display = 'flex';
+        // Small timeout to ensure display is set before adding show class
+        setTimeout(() => {
+            routeModal.classList.add('show');
+        }, 10);
     });
-
+    
+    // Close modal with animation
+    function closeModal() {
+        routeModal.classList.remove('show');
+        // Wait for animation to complete before hiding
+        setTimeout(() => {
+            routeModal.style.display = 'none';
+        }, 300); // Match this with the CSS transition time
+    }
+    
     // Cancel button closes the modal
-    cancelRouteModalBtn.addEventListener('click', () => {
-        routeModal.style.display = 'none';
-    });
-
+    cancelRouteModalBtn.addEventListener('click', closeModal);
+    
     // Handle route finding
     findRouteModalBtn.addEventListener('click', () => {
         const fromNode = fromNodeInput.value.trim();
         const toNode = toNodeInput.value.trim();
     
         // Close the modal after the user clicks the button
-        routeModal.style.display = 'none';
-
-
+        closeModal();
+    
         const existingStepsModal = document.getElementById('stepsModal');
         if (existingStepsModal) {
             existingStepsModal.remove();
@@ -80,6 +140,30 @@ toNodeInput.addEventListener('keypress', function(event) {
         if (!graph[fromNode] || !graph[toNode]) {
             alert("One or both of the specified nodes do not exist in the graph.");
             return;
+        }
+    
+        // Find the start node's floor
+        const startNodeData = nodesData.features.find(feature => feature.properties.NODE_ID === fromNode);
+        
+        if (startNodeData) {
+            // Map floor numbers to corresponding data-floor attributes
+            const floorMap = {
+                0: 'ground',
+                1: 'first'
+            };
+    
+            const startFloor = startNodeData.properties.Floor;
+            
+            // Find and click the correct floor button
+            const floorNumberButtons = document.querySelectorAll('.floor-number');
+            const targetButton = Array.from(floorNumberButtons).find(btn => 
+                btn.dataset.floor === floorMap[startFloor]
+            );
+    
+            if (targetButton) {
+                // Programmatically trigger the click event on the target floor button
+                targetButton.click();
+            }
         }
     
         // Find route using Dijkstra algorithm
@@ -160,14 +244,35 @@ toNodeInput.addEventListener('keypress', function(event) {
         // Step 3: Create and manage the steps modal within InitializeRouteModal
         let currentStepIndex = 0;
         const modalContainer = document.body;
-        const stepsModalHTML = `
-        <div id="stepsModal" style="position: absolute; bottom: 10px; left: 10px; background: white; padding: 20px; border: 1px solid black; border-radius: 10px; width: 300px; height: 100px; display: flex; align-items: center; justify-content: space-between;">
-         <button id="closeStepsModalBtn" style="position: absolute; top: 5px; right: 5px; background: red; color: white; border: none; border-radius: 5px; font-size: 14px; padding: 5px 8px; cursor: pointer;">x</button>
-            <button id="prevStepBtn" style="font-size: 18px; padding: 10px;">←</button>
-            <span id="stepTitle" style="color: black; font-size: 20px; font-weight: bold;">Step ${currentStep}</span>
-            <button id="nextStepBtn" style="font-size: 18px; padding: 10px;">→</button>
-        </div>
-        `;
+        const stepsModalHTML = `<div id="stepsModal" class="stepsModal">
+        <button id="closeStepsModalBtn" class="closeStepsModalBtn">✕</button>
+        <button id="prevStepBtn" class="prevStepBtn">←</button>
+        <span id="stepTitle" class="stepTitle">Step ${currentStep}</span>
+        <button id="nextStepBtn" class="nextStepBtn">→</button>
+    </div>
+    <style>
+        @keyframes fadeInModal {
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+    
+        #prevStepBtn:hover, #nextStepBtn:hover {
+            transform: scale(1.1);
+            color: #007bff;
+        }
+    
+        #closeStepsModalBtn:hover {
+            background: #ff6b6b;
+            transform: rotate(90deg);
+        }
+    
+        #stepTitle {
+            text-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+    </style>
+    `;
     
         // Ensure the modal container exists before appending
         if (modalContainer) {
@@ -187,7 +292,18 @@ toNodeInput.addEventListener('keypress', function(event) {
             const stepFloor = nodesData.features.find(node => node.properties.NODE_ID === currentStepNodes[0])?.properties.Floor;
             
             if (stepFloor !== undefined) {
-                stepTitle.textContent = `Step ${currentStepIndex + 1}: Floor ${stepFloor}`;
+                
+                stepTitle.style.transition = 'opacity 0.25s ease, transform 0.25s ease'; // Add transition for opacity and transform
+
+stepTitle.style.opacity = 0;
+stepTitle.style.transform = 'translateX(10px)'; // Slide it to the right (out of view)
+
+setTimeout(() => {
+    stepTitle.textContent = `Step ${currentStepIndex + 1}: Floor ${stepFloor}`;
+    stepTitle.style.opacity = 1;
+    stepTitle.style.transform = 'translateX(0)'; // Slide it back to its original position
+}, 250);
+
     
                 // Remove previous route layers and transition markers if they exist
                 if (map.getLayer('step-route-layer')) {
@@ -292,7 +408,7 @@ toNodeInput.addEventListener('keypress', function(event) {
                         });
     
                         
-// Modify the click event for floor transition marker
+                        // Modify the click event for floor transition marker
 map.on('click', 'floor-transition-marker', () => {
     // Add a small delay to ensure previous operations have completed
     setTimeout(() => {
@@ -310,8 +426,33 @@ map.on('click', 'floor-transition-marker', () => {
                 // Ensure both current and next nodes exist and are on different floors
                 if (currentNode && nextNode && 
                     currentNode.properties.Floor !== nextNode.properties.Floor) {
-                    currentStepIndex++;
-                    updateStepDisplay();
+                    
+                    // Determine the next floor and update UI accordingly
+                    const currentFloor = currentNode.properties.Floor;
+                    const nextFloor = nextNode.properties.Floor;
+
+                    // Map floor numbers to corresponding data-floor attributes
+                    const floorMap = {
+                        0: 'ground',
+                        1: 'first'
+                    };
+
+                    // Find the button for the next floor
+                    const floorNumberButtons = document.querySelectorAll('.floor-number');
+                    const targetButton = Array.from(floorNumberButtons).find(btn => 
+                        btn.dataset.floor === floorMap[nextFloor]
+                    );
+
+                    if (targetButton) {
+                        // Programmatically trigger the click event on the target floor button
+                        targetButton.click();
+                        
+                        // Increment the step index
+                        currentStepIndex++;
+                        updateStepDisplay();
+                    } else {
+                        console.warn('Could not find floor button for transition');
+                    }
                 } else {
                     console.warn('Floor transition not valid or nodes not found');
                 }
@@ -319,6 +460,7 @@ map.on('click', 'floor-transition-marker', () => {
         }
     }, 100); // Small 100ms delay to allow previous operations to complete
 });
+
     
                         // Change cursor to pointer when hovering over the marker
                         map.on('mouseenter', 'floor-transition-marker', () => {
@@ -339,19 +481,96 @@ map.on('click', 'floor-transition-marker', () => {
         // Initialize the first step display
         updateStepDisplay();
     
+
+        prevStepBtn.addEventListener('mouseover', () => {
+            prevStepBtn.style.transform = 'scale(1.1)';
+            prevStepBtn.style.color = '#007bff';
+        });
+        
+        prevStepBtn.addEventListener('mouseout', () => {
+            prevStepBtn.style.transform = 'scale(1)';
+            prevStepBtn.style.color = '#333';
+        });
+        
+        nextStepBtn.addEventListener('mouseover', () => {
+            nextStepBtn.style.transform = 'scale(1.1)';
+            nextStepBtn.style.color = '#007bff';
+        });
+        
+        nextStepBtn.addEventListener('mouseout', () => {
+            nextStepBtn.style.transform = 'scale(1)';
+            nextStepBtn.style.color = '#333';
+        });
         // Event listeners for navigating through the steps
         prevStepBtn.addEventListener('click', () => {
             if (currentStepIndex > 0) {
                 currentStepIndex--;
+                
+                // Find the floor for the current step
+                const currentStepNodes = steps[currentStepIndex];
+                const currentNode = nodesData.features.find(feature => 
+                    feature.properties.NODE_ID === currentStepNodes[0]
+                );
+        
+                if (currentNode) {
+                    // Map floor numbers to corresponding data-floor attributes
+                    const floorMap = {
+                        0: 'ground',
+                        1: 'first'
+                    };
+        
+                    const currentFloor = currentNode.properties.Floor;
+                    
+                    // Find and click the correct floor button
+                    const floorNumberButtons = document.querySelectorAll('.floor-number');
+                    const targetButton = Array.from(floorNumberButtons).find(btn => 
+                        btn.dataset.floor === floorMap[currentFloor]
+                    );
+        
+                    if (targetButton) {
+                        // Programmatically trigger the click event on the target floor button
+                        targetButton.click();
+                    }
+                }
+        
                 updateStepDisplay();
             }
         });
-    
+        
         nextStepBtn.addEventListener('click', () => {
             if (currentStepIndex < steps.length - 1) {
                 currentStepIndex++;
+                
+                // Find the floor for the current step
+                const currentStepNodes = steps[currentStepIndex];
+                const currentNode = nodesData.features.find(feature => 
+                    feature.properties.NODE_ID === currentStepNodes[0]
+                );
+        
+                if (currentNode) {
+                    // Map floor numbers to corresponding data-floor attributes
+                    const floorMap = {
+                        0: 'ground',
+                        1: 'first'
+                    };
+        
+                    const currentFloor = currentNode.properties.Floor;
+                    
+                    // Find and click the correct floor button
+                    const floorNumberButtons = document.querySelectorAll('.floor-number');
+                    const targetButton = Array.from(floorNumberButtons).find(btn => 
+                        btn.dataset.floor === floorMap[currentFloor]
+                    );
+        
+                    if (targetButton) {
+                        // Programmatically trigger the click event on the target floor button
+                        targetButton.click();
+                    }
+                }
+        
                 updateStepDisplay();
             }
+        
         });
     
 // Close steps modal functionality
