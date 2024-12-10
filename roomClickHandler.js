@@ -142,14 +142,35 @@ export function setupRoomClickHandler(map, roomToNodeMapping, findClosestNode, n
         
         // Create a container for buttons
         const roomLabelsContainer = document.querySelector('.mapboxgl-map');
+       
+
         const buttonContainer = document.createElement('div');
-        buttonContainer.style.position = 'absolute';
-        buttonContainer.style.bottom = '20px';
-        buttonContainer.style.left = '50%';
-        buttonContainer.style.transform = 'translateX(-50%)';
-        buttonContainer.style.display = 'flex';
-        buttonContainer.style.alignItems = 'center';
-        buttonContainer.style.gap = '10px';
+
+// Default styles for larger screens (PC)
+buttonContainer.style.position = 'absolute';
+buttonContainer.style.bottom = '20px';
+buttonContainer.style.left = '50%';
+buttonContainer.style.transform = 'translateX(-50%)';
+buttonContainer.style.display = 'flex';
+buttonContainer.style.alignItems = 'center';
+buttonContainer.style.gap = '10px';
+
+// Apply styles based on screen width
+if (window.innerWidth <= 768) { // Adjust 768px as needed
+  buttonContainer.style.position = 'fixed';
+  buttonContainer.style.bottom = '0';
+  buttonContainer.style.left = '0';
+  buttonContainer.style.transform = 'none'; // Reset the transform for mobile
+  buttonContainer.style.width = '100%'; // Full width on mobile
+  buttonContainer.style.justifyContent = 'center'; // Center items horizontally
+}
+
+// Append the container to your DOM
+document.body.appendChild(buttonContainer);
+
+
+ 
+
         
         // Create destination button
         const destinationButton = document.createElement('button');
