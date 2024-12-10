@@ -304,12 +304,22 @@ h1 {
   animation: fadeInModal 0.5s forwards;
 }
 
-@media (max-width: 768px) { /* Adjust this max-width as needed */
+@media (min-width: 375px) and (max-width: 400px) { /* Adjust this max-width as needed */
   #stepsModal {
-    left: 50%; 
+    left: 5%;
+    width: 300px;
     transform: translateX(-50%) translateY(20px); /* Center horizontally */
   }
 }
+@media (min-width: 300px) and (max-width: 321px) { /* Adjust this max-width as needed */
+  #stepsModal {
+    left: 5%;
+    width: 250px;
+    transform: translateX(-50%) translateY(20px); /* Center horizontally */
+  }
+}
+
+
 
 #closeStepsModalBtn {
   position: absolute; 
@@ -647,3 +657,8 @@ h1 {
   background-color: #007bff;
   color: white;
 }
+
+
+
+
+
