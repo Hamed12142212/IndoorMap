@@ -12,8 +12,7 @@ const map = new mapboxgl.Map({
     zoom: 17,
     pitch: 45,
     bearing: 90,
-    doubleClickZoom: false,
-    touchZoomRotate: false
+    doubleClickZoom: false
 });
 
 let currentView = 'building';
